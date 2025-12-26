@@ -13,9 +13,9 @@ h2,h3{color:#2563eb}
 label{display:block;margin-top:10px;font-weight:bold}
 input,select{width:100%;padding:8px;margin-top:5px}
 button{margin-top:12px;padding:10px;border:none;border-radius:6px;background:#2563eb;color:#fff;font-weight:bold;cursor:pointer}
-button.danger{background:#dc2626}
 button.success{background:#16a34a}
 button.warn{background:#f59e0b}
+button.danger{background:#dc2626}
 table{width:100%;border-collapse:collapse;margin-top:15px}
 th,td{border:1px solid #ddd;padding:8px;text-align:center}
 .payment-row{background:#ecfeff}
@@ -28,9 +28,9 @@ th,td{border:1px solid #ddd;padding:8px;text-align:center}
 
 <h2>Admin Dashboard</h2>
 
-<!-- ================= ADD WORK ================= -->
+<!-- ================= ADD / EDIT WORK ================= -->
 <div class="card">
-<h3>Add Work</h3>
+<h3>Add / Edit Work</h3>
 
 <label>Farmer</label>
 <select id="farmerSelect"></select>
@@ -47,13 +47,13 @@ th,td{border:1px solid #ddd;padding:8px;text-align:center}
 <label>Time (Minutes)</label>
 <input type="number" id="minutes">
 
-<label>Rate / Hour</label>
+<label>Rate per Hour</label>
 <input type="number" id="rate">
 
-<button onclick="addWork()">Add Work</button>
+<button id="workBtn" onclick="addOrUpdateWork()">Add Work</button>
 </div>
 
-<!-- ================= WORK HISTORY ================= -->
+<!-- ================= HISTORY ================= -->
 <div class="card">
 <h3>History</h3>
 
@@ -112,44 +112,68 @@ th,td{border:1px solid #ddd;padding:8px;text-align:center}
 <script>
 const API="https://ramana-back.onrender.com";
 const token=()=>localStorage.getItem("token");
+let editingWorkId=null;
 
 document.addEventListener("DOMContentLoaded",loadFarmers);
 
-/* LOAD FARMERS */
+/* ================= LOAD FARMERS ================= */
 async function loadFarmers(){
   const res=await fetch(API+"/api/admin/farmers",{headers:{Authorization:"Bearer "+token()}});
   const data=await res.json();
-  let opt='<option value="">--Select--</option>';
+  let opt='<option value="">-- Select Farmer --</option>';
   data.farmers.forEach(f=>opt+=`<option value="${f._id}">${f.name}</option>`);
   farmerSelect.innerHTML=historyFarmer.innerHTML=payFarmer.innerHTML=opt;
 }
 
-/* ADD WORK */
-async function addWork(){
-  await fetch(API+"/api/admin/work",{
-    method:"POST",
+/* ================= ADD / UPDATE WORK ================= */
+async function addOrUpdateWork(){
+  if(!farmerSelect.value || !workType.value || !minutes.value || !rate.value){
+    alert("Fill all fields");
+    return;
+  }
+
+  const payload={
+    farmerId:farmerSelect.value,
+    workType:workType.value,
+    minutes:+minutes.value,
+    ratePer60:+rate.value
+  };
+
+  let url=API+"/api/admin/work";
+  let method="POST";
+
+  if(editingWorkId){
+    url+="/"+editingWorkId;
+    method="PUT";
+  }
+
+  await fetch(url,{
+    method,
     headers:{
       "Content-Type":"application/json",
       Authorization:"Bearer "+token()
     },
-    body:JSON.stringify({
-      farmerId:farmerSelect.value,
-      workType:workType.value,
-      minutes:+minutes.value,
-      ratePer60:+rate.value
-    })
+    body:JSON.stringify(payload)
   });
+
+  alert(editingWorkId?"Work Updated":"Work Added");
+
+  editingWorkId=null;
+  workBtn.innerText="Add Work";
+  workType.value=minutes.value=rate.value="";
+
   historyFarmer.value=farmerSelect.value;
   historyFarmer.onchange();
 }
 
-/* LOAD HISTORY */
+/* ================= LOAD HISTORY ================= */
 historyFarmer.onchange=async()=>{
   const res=await fetch(API+"/api/admin/work?farmerId="+historyFarmer.value,{
     headers:{Authorization:"Bearer "+token()}
   });
   const data=await res.json();
   tbody.innerHTML="";
+
   data.works.forEach(w=>{
     tbody.innerHTML+=`
       <tr data-id="${w._id}">
@@ -161,7 +185,7 @@ historyFarmer.onchange=async()=>{
         <td>${w.paymentGiven}</td>
         <td>${w.totalAmount-w.paymentGiven}</td>
         <td>
-          <button onclick="editWork('${w._id}',${w.minutes},${w.ratePer60})">Edit</button>
+          <button onclick="editWork('${w._id}','${w.farmer._id}','${w.workType}',${w.minutes},${w.ratePer60})">Edit</button>
           <button class="danger" onclick="deleteWork('${w._id}')">Delete</button>
         </td>
       </tr>
@@ -169,8 +193,24 @@ historyFarmer.onchange=async()=>{
   });
 };
 
-/* ADD PAYMENT → NEW ROW */
+/* ================= EDIT WORK ================= */
+function editWork(id,farmerId,type,min,rate){
+  editingWorkId=id;
+  farmerSelect.value=farmerId;
+  workType.value=type;
+  minutes.value=min;
+  rate.value=rate;
+  workBtn.innerText="Update Work";
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+/* ================= ADD PAYMENT (NEW ROW) ================= */
 async function addPayment(){
+  if(!payFarmer.value || !payAmount.value){
+    alert("Select farmer & amount");
+    return;
+  }
+
   await fetch(API+"/api/admin/payment/"+payFarmer.value,{
     method:"POST",
     headers:{
@@ -192,25 +232,11 @@ async function addPayment(){
       <td>-</td>
     </tr>
   `;
+
   payAmount.value="";
 }
 
-/* EDIT WORK */
-async function editWork(id,min,rate){
-  const m=prompt("Enter minutes",min);
-  const r=prompt("Enter rate",rate);
-  await fetch(API+"/api/admin/work/"+id,{
-    method:"PUT",
-    headers:{
-      "Content-Type":"application/json",
-      Authorization:"Bearer "+token()
-    },
-    body:JSON.stringify({minutes:+m,ratePer60:+r})
-  });
-  historyFarmer.onchange();
-}
-
-/* DELETE WORK */
+/* ================= DELETE WORK ================= */
 async function deleteWork(id){
   await fetch(API+"/api/admin/work/"+id,{
     method:"DELETE",
@@ -219,7 +245,7 @@ async function deleteWork(id){
   historyFarmer.onchange();
 }
 
-/* CHANGE PASSWORD */
+/* ================= CHANGE PASSWORD ================= */
 async function changePassword(){
   await fetch(API+"/api/admin/change-password",{
     method:"POST",
@@ -236,7 +262,7 @@ async function changePassword(){
   oldPass.value=newPass.value="";
 }
 
-/* LOGOUT */
+/* ================= LOGOUT ================= */
 function logout(){
   localStorage.clear();
   location.href="index.html";
