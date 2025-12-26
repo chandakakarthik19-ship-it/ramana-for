@@ -138,36 +138,43 @@ th,td{border:1px solid #ddd;padding:8px;text-align:center}
 const API = "https://ramana-back.onrender.com";
 const token = () => localStorage.getItem("token");
 
-window.onload = loadFarmers;
+/* LOAD AFTER DOM READY */
+document.addEventListener("DOMContentLoaded", () => {
+  loadFarmers();
+});
 
-/* ================= LOAD FARMERS ================= */
+/* ================= LOAD FARMERS (FIXED FOREVER) ================= */
 async function loadFarmers(){
   try{
     const res = await fetch(API + "/api/admin/farmers", {
-      headers:{ Authorization: "Bearer " + token() }
+      headers:{ Authorization:"Bearer " + token() }
     });
 
     if(!res.ok){
-      alert("Session expired. Login again.");
+      alert("Session expired. Please login again.");
       logout();
       return;
     }
 
     const data = await res.json();
-    const farmers = data.farmers || [];
+
+    // 🔥 SUPPORT ALL BACKEND RESPONSE TYPES
+    const farmers = Array.isArray(data)
+      ? data
+      : (data.farmers || data.data || []);
 
     let options = `<option value="">-- Select Farmer --</option>`;
     farmers.forEach(f=>{
       options += `<option value="${f._id}">${f.name}</option>`;
     });
 
-    farmerSelect.innerHTML  = options;
-    historyFarmer.innerHTML = options;
-    payFarmer.innerHTML     = options;
-    deleteFarmer.innerHTML  = options;
+    document.getElementById("farmerSelect").innerHTML  = options;
+    document.getElementById("historyFarmer").innerHTML = options;
+    document.getElementById("payFarmer").innerHTML     = options;
+    document.getElementById("deleteFarmer").innerHTML  = options;
 
   }catch(err){
-    console.error(err);
+    console.error("Farmer load error:", err);
     alert("Failed to load farmers");
   }
 }
@@ -200,7 +207,7 @@ historyFarmer.onchange = async ()=>{
   let total = 0, paid = 0;
   tbody.innerHTML = "";
 
-  data.works.forEach(w=>{
+  (data.works || []).forEach(w=>{
     total += w.totalAmount;
     paid  += w.paymentGiven;
 
