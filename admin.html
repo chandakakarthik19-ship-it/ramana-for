@@ -1,24 +1,24 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
 <title>Admin Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body{margin:0;font-family:Segoe UI;background:#f3f4f6}
-.container{max-width:900px;margin:auto;padding:20px}
-.card{background:#fff;padding:20px;border-radius:10px;margin-bottom:20px;box-shadow:0 4px 12px rgba(0,0,0,.08)}
+body{font-family:Arial;background:#f3f4f6;margin:0}
+.container{max-width:1100px;margin:auto;padding:20px}
+.card{background:#fff;padding:20px;border-radius:10px;margin-bottom:20px;box-shadow:0 4px 10px rgba(0,0,0,.1)}
 h2,h3{color:#2563eb;margin-top:0}
-label{display:block;margin-top:12px;font-weight:600}
-input,select{width:100%;padding:10px;margin-top:6px;border-radius:8px;border:1px solid #ddd}
-button{margin-top:14px;padding:10px 16px;border:none;border-radius:8px;background:#2563eb;color:#fff;font-weight:600;cursor:pointer}
+label{display:block;margin-top:10px;font-weight:bold}
+input,select{width:100%;padding:8px;margin-top:5px}
+button{margin-top:12px;padding:10px;border:none;border-radius:6px;background:#2563eb;color:#fff;font-weight:bold;cursor:pointer}
 button.danger{background:#dc2626}
 button.success{background:#16a34a}
 table{width:100%;border-collapse:collapse;margin-top:15px}
 th,td{border:1px solid #ddd;padding:8px;text-align:center}
-.summary{display:flex;gap:10px;margin-top:15px}
-.summary input{font-size:18px;font-weight:700;border:none;background:#f9fafb}
+.summary{display:flex;gap:20px;margin-top:15px}
+.summary div{flex:1}
 .logout{text-align:center}
 </style>
 </head>
@@ -41,9 +41,7 @@ th,td{border:1px solid #ddd;padding:8px;text-align:center}
   <option>దుక్కు</option>
   <option>లోడింగ్</option>
   <option>రోటావేటర్</option>
-  <option>జొన్నలు</option>
-  <option>వరిసేను ఆట</option>
-  <option>గత్తం</option>
+  <option>వరిసేను</option>
 </select>
 
 <label>Time Worked (Minutes)</label>
@@ -65,30 +63,32 @@ th,td{border:1px solid #ddd;padding:8px;text-align:center}
 <table>
 <thead>
 <tr>
-<th>Date</th>
-<th>Work</th>
-<th>Total</th>
-<th>Paid</th>
-<th>Balance</th>
-<th>Delete</th>
+  <th>Date</th>
+  <th>Work</th>
+  <th>Time (min)</th>
+  <th>Rate/hr</th>
+  <th>Total</th>
+  <th>Paid</th>
+  <th>Balance</th>
+  <th>Delete</th>
 </tr>
 </thead>
 <tbody id="tbody"></tbody>
 </table>
 
 <div class="summary">
-<div>
-<label>Total</label>
-<input id="totalBox" readonly>
-</div>
-<div>
-<label>Paid</label>
-<input id="paidBox" readonly>
-</div>
-<div>
-<label>Balance</label>
-<input id="balanceBox" readonly>
-</div>
+  <div>
+    <label>Total</label>
+    <input id="totalBox" readonly>
+  </div>
+  <div>
+    <label>Paid</label>
+    <input id="paidBox" readonly>
+  </div>
+  <div>
+    <label>Balance</label>
+    <input id="balanceBox" readonly>
+  </div>
 </div>
 </div>
 
@@ -103,19 +103,6 @@ th,td{border:1px solid #ddd;padding:8px;text-align:center}
 <input type="number" id="payAmount">
 
 <button class="success" onclick="addPayment()">Add Payment</button>
-</div>
-
-<!-- ================= CHANGE PASSWORD ================= -->
-<div class="card">
-<h3>Change Admin Password</h3>
-
-<label>Old Password</label>
-<input type="password" id="oldPass">
-
-<label>New Password</label>
-<input type="password" id="newPass">
-
-<button onclick="changePassword()">Change Password</button>
 </div>
 
 <!-- ================= MANAGE FARMER ================= -->
@@ -138,49 +125,34 @@ th,td{border:1px solid #ddd;padding:8px;text-align:center}
 const API = "https://ramana-back.onrender.com";
 const token = () => localStorage.getItem("token");
 
-/* LOAD AFTER DOM READY */
-document.addEventListener("DOMContentLoaded", () => {
-  loadFarmers();
-});
+document.addEventListener("DOMContentLoaded", loadFarmers);
 
-/* ================= LOAD FARMERS (FIXED FOREVER) ================= */
+/* ================= LOAD FARMERS ================= */
 async function loadFarmers(){
-  try{
-    const res = await fetch(API + "/api/admin/farmers", {
-      headers:{ Authorization:"Bearer " + token() }
-    });
+  const res = await fetch(API + "/api/admin/farmers",{
+    headers:{ Authorization:"Bearer " + token() }
+  });
+  const data = await res.json();
+  const farmers = data.farmers || [];
 
-    if(!res.ok){
-      alert("Session expired. Please login again.");
-      logout();
-      return;
-    }
+  let options = `<option value="">-- Select Farmer --</option>`;
+  farmers.forEach(f=>{
+    options += `<option value="${f._id}">${f.name}</option>`;
+  });
 
-    const data = await res.json();
-
-    // 🔥 SUPPORT ALL BACKEND RESPONSE TYPES
-    const farmers = Array.isArray(data)
-      ? data
-      : (data.farmers || data.data || []);
-
-    let options = `<option value="">-- Select Farmer --</option>`;
-    farmers.forEach(f=>{
-      options += `<option value="${f._id}">${f.name}</option>`;
-    });
-
-    document.getElementById("farmerSelect").innerHTML  = options;
-    document.getElementById("historyFarmer").innerHTML = options;
-    document.getElementById("payFarmer").innerHTML     = options;
-    document.getElementById("deleteFarmer").innerHTML  = options;
-
-  }catch(err){
-    console.error("Farmer load error:", err);
-    alert("Failed to load farmers");
-  }
+  farmerSelect.innerHTML = options;
+  historyFarmer.innerHTML = options;
+  payFarmer.innerHTML = options;
+  deleteFarmer.innerHTML = options;
 }
 
 /* ================= ADD WORK ================= */
 async function addWork(){
+  if(!farmerSelect.value || !workType.value || !minutes.value || !rate.value){
+    alert("Fill all fields");
+    return;
+  }
+
   await fetch(API + "/api/admin/work",{
     method:"POST",
     headers:{
@@ -194,7 +166,12 @@ async function addWork(){
       ratePer60: Number(rate.value)
     })
   });
+
   alert("Work Added");
+  minutes.value = rate.value = "";
+
+  historyFarmer.value = farmerSelect.value;
+  historyFarmer.onchange();
 }
 
 /* ================= LOAD HISTORY ================= */
@@ -207,20 +184,20 @@ historyFarmer.onchange = async ()=>{
   let total = 0, paid = 0;
   tbody.innerHTML = "";
 
-  (data.works || []).forEach(w=>{
+  data.works.forEach(w=>{
     total += w.totalAmount;
-    paid  += w.paymentGiven;
+    paid += w.paymentGiven;
 
     tbody.innerHTML += `
-      <tr>
+      <tr data-id="${w._id}">
         <td>${new Date(w.date).toLocaleDateString()}</td>
         <td>${w.workType}</td>
+        <td>${w.minutes}</td>
+        <td>${w.ratePer60}</td>
         <td>${w.totalAmount}</td>
         <td>${w.paymentGiven}</td>
         <td>${w.totalAmount - w.paymentGiven}</td>
-        <td>
-          <button onclick="deleteWork('${w._id}')">Delete</button>
-        </td>
+        <td><button onclick="deleteWork('${w._id}')">Delete</button></td>
       </tr>
     `;
   });
@@ -232,16 +209,39 @@ historyFarmer.onchange = async ()=>{
 
 /* ================= ADD PAYMENT ================= */
 async function addPayment(){
+  if(!payFarmer.value || !payAmount.value){
+    alert("Select farmer and enter amount");
+    return;
+  }
+
+  if(historyFarmer.value !== payFarmer.value){
+    alert("Select same farmer in Work History");
+    return;
+  }
+
+  const lastRow = tbody.querySelector("tr:last-child");
+  if(!lastRow){
+    alert("No work found");
+    return;
+  }
+
+  const workId = lastRow.getAttribute("data-id");
+
   await fetch(API + "/api/admin/payment/" + payFarmer.value,{
     method:"POST",
     headers:{
       "Content-Type":"application/json",
       Authorization:"Bearer " + token()
     },
-    body:JSON.stringify({ amount:Number(payAmount.value) })
+    body:JSON.stringify({
+      amount:Number(payAmount.value),
+      workId
+    })
   });
+
   alert("Payment Added");
   payAmount.value="";
+  historyFarmer.onchange();
 }
 
 /* ================= DELETE WORK ================= */
@@ -262,23 +262,6 @@ async function deleteFarmer(){
   });
   alert("Farmer Deleted");
   loadFarmers();
-}
-
-/* ================= CHANGE PASSWORD ================= */
-async function changePassword(){
-  await fetch(API + "/api/admin/change-password",{
-    method:"POST",
-    headers:{
-      "Content-Type":"application/json",
-      Authorization:"Bearer " + token()
-    },
-    body:JSON.stringify({
-      oldPassword: oldPass.value,
-      newPassword: newPass.value
-    })
-  });
-  alert("Password Changed");
-  oldPass.value = newPass.value = "";
 }
 
 /* ================= LOGOUT ================= */
