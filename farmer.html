@@ -6,158 +6,84 @@
 <title>Farmer Dashboard</title>
 
 <style>
-    :root{
-      --primary:#2563eb;
-      --success:#16a34a;
-      --danger:#dc2626;
-      --bg:#f3f4f6;
-      --card:#ffffff;
-      --border:#e5e7eb;
-      --text:#1f2937;
-      --muted:#6b7280;
-    }
-
-    *{ box-sizing:border-box; }
-
-    body{
-      margin:0;
-      font-family:"Segoe UI", Tahoma, Arial, sans-serif;
-      background:var(--bg);
-      color:var(--text);
-    }
-
-    .container{
-      max-width:1200px;
-      margin:auto;
-      padding:20px;
-    }
-
-    h1{
-      color:var(--primary);
-      margin-bottom:15px;
-    }
-
-    .card{
-      background:var(--card);
-      border-radius:12px;
-      padding:25px;
-      box-shadow:0 10px 25px rgba(0,0,0,0.06);
-      margin-bottom:20px;
-    }
-
-    /* INFO HEADER */
-    .info{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      flex-wrap:wrap;
-      gap:15px;
-    }
-
-    .info strong{
-      font-size:18px;
-    }
-
-    .info span{
-      color:var(--muted);
-      font-size:14px;
-    }
-
-    .actions a{
-      text-decoration:none;
-      font-weight:600;
-      padding:8px 14px;
-      border-radius:8px;
-      color:white;
-      background:var(--primary);
-      margin-left:8px;
-    }
-
-    .logout{
-      background:var(--danger);
-    }
-
-    /* SUMMARY BOXES */
-    .summary{
-      display:flex;
-      gap:20px;
-      margin-top:20px;
-    }
-
-    .box{
-      flex:1;
-      background:#f9fafb;
-      border:1px solid var(--border);
-      border-radius:10px;
-      padding:18px;
-    }
-
-    .box label{
-      font-size:13px;
-      color:var(--muted);
-    }
-
-    .box div{
-      margin-top:6px;
-      font-size:22px;
-      font-weight:700;
-    }
-
-    .total{ color:#2563eb; }
-    .paid{ color:var(--success); }
-    .balance{ color:var(--danger); }
-
-    h3{
-      margin-top:30px;
-      margin-bottom:10px;
-    }
-
-    /* TABLE */
-    table{
-      width:100%;
-      border-collapse:collapse;
-      margin-top:10px;
-      background:rgb(208, 244, 6);
-      border-radius:10px;
-      overflow:hidden;
-    }
-
-    th{
-      background:#ef0591;
-      padding:12px;
-      font-size:13px;
-      font-weight:600;
-      color:#374151;
-      border-bottom:1px solid var(--border);
-      text-align:left;
-    }
-
-    td{
-      padding:12px;
-      border-bottom:1px solid var(--border);
-      font-size:14px;
-    }
-
-    tr:hover{
-      background:#f9fafb;
-    }
-
-    .empty{
-      text-align:center;
-      color:var(--muted);
-      padding:20px;
-    }
-
-    @media(max-width:768px){
-      .summary{
-        flex-direction:column;
-      }
-      .info{
-        flex-direction:column;
-        align-items:flex-start;
-      }
-    }
-  </style>
+:root{
+  --primary:#2563eb;
+  --success:#16a34a;
+  --danger:#dc2626;
+  --bg:#f3f4f6;
+  --card:#ffffff;
+  --border:#e5e7eb;
+  --text:#1f2937;
+  --muted:#6b7280;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:"Segoe UI",Tahoma,Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+.container{
+  max-width:1200px;
+  margin:auto;
+  padding:20px;
+}
+h1{color:var(--primary)}
+.card{
+  background:var(--card);
+  border-radius:12px;
+  padding:25px;
+  box-shadow:0 10px 25px rgba(0,0,0,.06);
+}
+.info{
+  display:flex;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:15px;
+}
+.actions a{
+  text-decoration:none;
+  font-weight:600;
+  padding:8px 14px;
+  border-radius:8px;
+  color:white;
+  background:var(--primary);
+  margin-left:8px;
+}
+.logout{background:var(--danger)}
+.summary{
+  display:flex;
+  gap:20px;
+  margin:20px 0;
+}
+.box{
+  flex:1;
+  background:#f9fafb;
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:18px;
+}
+.box label{font-size:13px;color:var(--muted)}
+.box div{font-size:22px;font-weight:700}
+.total{color:var(--primary)}
+.paid{color:var(--success)}
+.balance{color:var(--danger)}
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:15px;
+}
+th,td{
+  border:1px solid var(--border);
+  padding:10px;
+  font-size:14px;
+}
+th{background:#f1f5f9}
+.empty{text-align:center;color:var(--muted)}
+@media(max-width:768px){
+  .summary{flex-direction:column}
+}
+</style>
 </head>
 
 <body>
@@ -166,137 +92,155 @@
 <h1>Farmer Dashboard</h1>
 
 <div class="card">
-
   <div class="info" id="info"></div>
 
   <div class="summary">
     <div class="box">
-      <label>Total Amount</label>
+      <label>మొత్తం</label>
       <div class="total" id="totalBox">₹0</div>
     </div>
     <div class="box">
-      <label>Total Paid</label>
+      <label>చెల్లించిన మొత్తం</label>
       <div class="paid" id="paidBox">₹0</div>
     </div>
     <div class="box">
-      <label>Balance</label>
+      <label>బాకీ</label>
       <div class="balance" id="balanceBox">₹0</div>
     </div>
   </div>
 
-  <h3>Work & Payment History</h3>
+  <h3>పని & చెల్లింపు వివరాలు</h3>
 
   <table>
     <thead>
       <tr>
-        <th>Date</th>
-        <th>Type</th>
-        <th>Minutes</th>
-        <th>Rate / 60</th>
-        <th>Total</th>
-        <th>Paid</th>
-        <th>Notes</th>
+        <th>తేదీ</th>
+        <th>రకం</th>
+        <th>నిమిషాలు</th>
+        <th>రేట్</th>
+        <th>మొత్తం</th>
+        <th>చెల్లింపు</th>
+        <th>గమనిక</th>
       </tr>
     </thead>
     <tbody id="tbody"></tbody>
   </table>
+</div>
 
 </div>
-</div>
+
+<!-- jsPDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
 
 <script>
-const API = "https://ramana-back.onrender.com";
+const API="https://ramana-back.onrender.com";
 
 async function loadDashboard(){
-  const token = localStorage.getItem("token");
-  const name  = localStorage.getItem("name");
+  const token=localStorage.getItem("token");
+  const name=localStorage.getItem("name");
 
   if(!token){
-    location.href = "farmer-login.html";
+    location.href="farmer-login.html";
     return;
   }
 
-  document.getElementById("info").innerHTML = `
+  document.getElementById("info").innerHTML=`
     <div>
-      <strong>${name || "Farmer"}</strong><br>
+      <strong>${name||"Farmer"}</strong><br>
       <span>Role: Farmer</span>
     </div>
     <div class="actions">
+      <a href="#" onclick="downloadPDF()">Download PDF</a>
       <a class="logout" href="#" onclick="logout()">Logout</a>
     </div>
   `;
 
-  const res = await fetch(API + "/api/farmer/dashboard",{
-    headers:{ Authorization:"Bearer " + token }
+  const res=await fetch(API+"/api/farmer/dashboard",{
+    headers:{Authorization:"Bearer "+token}
   });
 
-  if(res.status === 401 || res.status === 403){
-    alert("Session expired. Login again.");
-    localStorage.clear();
-    location.href = "farmer-login.html";
-    return;
+  const data=await res.json();
+  const tbody=document.getElementById("tbody");
+  tbody.innerHTML="";
+
+  let total=0,paid=0;
+
+  data.works.forEach(w=>{
+    total+=w.totalAmount||0;
+    tbody.innerHTML+=`
+      <tr>
+        <td>${new Date(w.date).toLocaleDateString()}</td>
+        <td>${w.workType}</td>
+        <td>${w.minutes}</td>
+        <td>₹${w.ratePer60}</td>
+        <td>₹${w.totalAmount}</td>
+        <td>₹${w.paymentGiven||0}</td>
+        <td>-</td>
+      </tr>`;
+  });
+
+  data.farmer.payments.forEach(p=>{
+    paid+=p.amount||0;
+    tbody.innerHTML+=`
+      <tr>
+        <td>${new Date(p.date).toLocaleDateString()}</td>
+        <td>Payment</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-₹${p.amount}</td>
+        <td>-</td>
+      </tr>`;
+  });
+
+  if(!tbody.innerHTML){
+    tbody.innerHTML=`<tr><td colspan="7" class="empty">No records</td></tr>`;
   }
 
-  const data = await res.json();
-  const tbody = document.getElementById("tbody");
-  tbody.innerHTML = "";
+  totalBox.innerText="₹"+total;
+  paidBox.innerText="₹"+paid;
+  balanceBox.innerText="₹"+(total-paid);
+}
 
-  let total = 0;
-  let paid  = 0;
+async function downloadPDF(){
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF();
 
-  /* ===== WORKS ===== */
-  if(data.works.length){
-    data.works.forEach(w=>{
-      total += w.totalAmount || 0;
+  const font=await fetch("NotoTelugu-Regular.ttf").then(r=>r.arrayBuffer());
+  doc.addFileToVFS("NotoTelugu.ttf",font);
+  doc.addFont("NotoTelugu.ttf","NotoTelugu","normal");
+  doc.setFont("NotoTelugu");
 
-      tbody.innerHTML += `
-        <tr>
-          <td>${new Date(w.date).toLocaleDateString()}</td>
-          <td>${w.workType}</td>
-          <td>${w.minutes}</td>
-          <td>₹${w.ratePer60}</td>
-          <td>₹${w.totalAmount}</td>
-          <td>₹${w.paymentGiven || 0}</td>
-          <td>-</td>
-        </tr>`;
-    });
-  }
+  doc.setFontSize(16);
+  doc.text("రైతు పని & చెల్లింపుల వివరాలు",14,15);
 
-  /* ===== PAYMENTS ===== */
-  if(data.farmer.payments.length){
-    data.farmer.payments.forEach(p=>{
-      paid += p.amount || 0;
+  const rows=[];
+  document.querySelectorAll("#tbody tr").forEach(tr=>{
+    rows.push([...tr.children].map(td=>td.innerText));
+  });
 
-      tbody.innerHTML += `
-        <tr class="payment">
-          <td>${new Date(p.date).toLocaleDateString()}</td>
-          <td>Payment</td>
-          <td>-</td>
-          <td>-</td>
-          <td>-</td>
-          <td>-₹${p.amount}</td>
-          <td>-</td>
-        </tr>`;
-    });
-  }
+  doc.autoTable({
+    startY:25,
+    head:[["తేదీ","రకం","నిమిషాలు","రేట్","మొత్తం","చెల్లింపు","గమనిక"]],
+    body:rows,
+    styles:{font:"NotoTelugu",fontSize:10}
+  });
 
-  if(!data.works.length && !data.farmer.payments.length){
-    tbody.innerHTML = `<tr><td colspan="7" class="empty">No records found</td></tr>`;
-  }
+  let y=doc.lastAutoTable.finalY+10;
+  doc.text("మొత్తం : "+totalBox.innerText,14,y);
+  doc.text("చెల్లించిన మొత్తం : "+paidBox.innerText,14,y+8);
+  doc.text("బాకీ : "+balanceBox.innerText,14,y+16);
 
-  /* ===== SUMMARY ===== */
-  document.getElementById("totalBox").innerText = "₹" + total;
-  document.getElementById("paidBox").innerText  = "₹" + paid;
-  document.getElementById("balanceBox").innerText = "₹" + (total - paid);
+  doc.save("Farmer_Report_Telugu.pdf");
 }
 
 function logout(){
   localStorage.clear();
-  location.href = "farmer-login.html";
+  location.href="farmer-login.html";
 }
 
 loadDashboard();
 </script>
-
 </body>
 </html>
