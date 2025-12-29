@@ -18,6 +18,7 @@ button.warn{background:#f59e0b}
 button.danger{background:#dc2626}
 table{width:100%;border-collapse:collapse;margin-top:15px}
 th,td{border:1px solid #ddd;padding:8px;text-align:center}
+.payment-row{background:#ecfeff}
 .logout{text-align:center}
 </style>
 </head>
@@ -46,9 +47,9 @@ th,td{border:1px solid #ddd;padding:8px;text-align:center}
 <button id="workBtn" onclick="addOrUpdateWork()">Add Work</button>
 </div>
 
-<!-- ================= WORK HISTORY ================= -->
+<!-- ================= HISTORY ================= -->
 <div class="card">
-<h3>Work History</h3>
+<h3>History (Work + Payments)</h3>
 
 <label>Select Farmer</label>
 <select id="historyFarmer"></select>
@@ -57,7 +58,7 @@ th,td{border:1px solid #ddd;padding:8px;text-align:center}
 <thead>
 <tr>
   <th>Date</th>
-  <th>Work</th>
+  <th>Type</th>
   <th>Minutes</th>
   <th>Rate</th>
   <th>Total</th>
@@ -72,7 +73,7 @@ th,td{border:1px solid #ddd;padding:8px;text-align:center}
 
 <!-- ================= PAYMENT ================= -->
 <div class="card">
-<h3>Payment</h3>
+<h3>Add Payment</h3>
 
 <label>Select Farmer</label>
 <select id="payFarmer"></select>
@@ -89,6 +90,9 @@ th,td{border:1px solid #ddd;padding:8px;text-align:center}
 
 <label>Select Farmer</label>
 <select id="deleteFarmer"></select>
+
+<label>Admin Password</label>
+<input type="password" id="confirmAdminPass" placeholder="Enter admin password">
 
 <button class="danger" onclick="deleteFarmer()">Delete Farmer</button>
 </div>
@@ -181,18 +185,22 @@ async function addOrUpdateWork(){
   workType.value = minutes.value = rate.value = "";
 
   historyFarmer.value = farmerSelect.value;
-  historyFarmer.onchange();
+  loadHistory();
 }
 
-/* ================= LOAD WORK HISTORY ================= */
-historyFarmer.onchange = async ()=>{
-  const res = await fetch(API + "/api/admin/work?farmerId=" + historyFarmer.value,{
-    headers:{ Authorization:"Bearer " + token() }
-  });
-  const data = await res.json();
+/* ================= LOAD HISTORY ================= */
+async function loadHistory(){
+  if(!historyFarmer.value) return;
   tbody.innerHTML = "";
 
-  data.works.forEach(w=>{
+  /* ---- WORKS ---- */
+  const workRes = await fetch(
+    API + "/api/admin/work?farmerId=" + historyFarmer.value,
+    { headers:{ Authorization:"Bearer " + token() } }
+  );
+  const workData = await workRes.json();
+
+  workData.works.forEach(w=>{
     tbody.innerHTML += `
       <tr>
         <td>${new Date(w.date).toLocaleDateString()}</td>
@@ -209,7 +217,35 @@ historyFarmer.onchange = async ()=>{
       </tr>
     `;
   });
-};
+
+  /* ---- PAYMENTS ---- */
+  const farmerRes = await fetch(API + "/api/admin/farmers", {
+    headers:{ Authorization:"Bearer " + token() }
+  });
+  const farmerData = await farmerRes.json();
+  const farmer = farmerData.farmers.find(f=>f._id===historyFarmer.value);
+
+  if(farmer && farmer.payments){
+    farmer.payments.forEach(p=>{
+      tbody.innerHTML += `
+        <tr class="payment-row">
+          <td>${new Date(p.date).toLocaleDateString()}</td>
+          <td>Payment</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+          <td>${p.amount}</td>
+          <td>-</td>
+          <td>
+            <button class="danger" onclick="deletePayment('${farmer._id}','${p._id}')">Delete</button>
+          </td>
+        </tr>
+      `;
+    });
+  }
+}
+
+historyFarmer.onchange = loadHistory;
 
 /* ================= EDIT WORK ================= */
 function editWork(id, farmerId, type, min, rate){
@@ -229,7 +265,7 @@ async function addPayment(){
     return;
   }
 
-  const res = await fetch(API + "/api/admin/payment/" + payFarmer.value,{
+  await fetch(API + "/api/admin/payment/" + payFarmer.value,{
     method:"POST",
     headers:{
       "Content-Type":"application/json",
@@ -238,39 +274,67 @@ async function addPayment(){
     body: JSON.stringify({ amount: Number(payAmount.value) })
   });
 
-  const data = await res.json();
-  if(!data.success){
-    alert("Payment not stored");
-    return;
-  }
-
-  alert("Payment stored in database");
-  payAmount.value = "";
-
+  alert("Payment stored");
+  payAmount.value="";
   historyFarmer.value = payFarmer.value;
-  historyFarmer.onchange();
+  loadHistory();
+}
+
+/* ================= DELETE PAYMENT ================= */
+async function deletePayment(farmerId, paymentId){
+  if(!confirm("Delete payment?")) return;
+
+  await fetch(API + "/api/admin/payment/" + farmerId + "/" + paymentId,{
+    method:"DELETE",
+    headers:{ Authorization:"Bearer " + token() }
+  });
+
+  loadHistory();
 }
 
 /* ================= DELETE WORK ================= */
 async function deleteWork(id){
+  if(!confirm("Delete work?")) return;
+
   await fetch(API + "/api/admin/work/" + id,{
     method:"DELETE",
     headers:{ Authorization:"Bearer " + token() }
   });
-  historyFarmer.onchange();
+
+  loadHistory();
 }
 
 /* ================= DELETE FARMER ================= */
 async function deleteFarmer(){
-  if(!confirm("Delete farmer and all works?")) return;
+  if(!deleteFarmer.value || !confirmAdminPass.value){
+    alert("Select farmer and enter admin password");
+    return;
+  }
 
-  await fetch(API + "/api/admin/farmer/" + deleteFarmer.value,{
+  const verify = await fetch(API + "/api/admin/verify-password",{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json",
+      Authorization:"Bearer " + token()
+    },
+    body: JSON.stringify({ password: confirmAdminPass.value })
+  });
+
+  const v = await verify.json();
+  if(!v.success){
+    alert("Admin password incorrect");
+    return;
+  }
+
+  await fetch(API + "/api/admin/farmers/" + deleteFarmer.value,{
     method:"DELETE",
     headers:{ Authorization:"Bearer " + token() }
   });
 
   alert("Farmer deleted");
+  confirmAdminPass.value="";
   loadFarmers();
+  tbody.innerHTML="";
 }
 
 /* ================= CHANGE PASSWORD ================= */
@@ -288,13 +352,13 @@ async function changePassword(){
   });
 
   alert("Password changed");
-  oldPass.value = newPass.value = "";
+  oldPass.value=newPass.value="";
 }
 
 /* ================= LOGOUT ================= */
 function logout(){
   localStorage.clear();
-  location.href = "index.html";
+  location.href="index.html";
 }
 </script>
 
