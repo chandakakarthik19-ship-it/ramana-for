@@ -6,19 +6,83 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body{font-family:Arial;background:#f3f4f6;margin:0}
-.container{max-width:1200px;margin:auto;padding:20px}
-.card{background:#fff;padding:20px;border-radius:10px;margin-bottom:20px;box-shadow:0 4px 10px rgba(0,0,0,.1)}
-h2,h3{color:#2563eb}
-label{display:block;margin-top:10px;font-weight:bold}
-input,select{width:100%;padding:8px;margin-top:5px}
-button{margin-top:12px;padding:10px;border:none;border-radius:6px;background:#2563eb;color:#fff;font-weight:bold;cursor:pointer}
-button.success{background:#16a34a}
-button.warn{background:#f59e0b}
-button.danger{background:#dc2626}
-table{width:100%;border-collapse:collapse;margin-top:15px}
-th,td{border:1px solid #ddd;padding:8px;text-align:center}
+:root{
+  --primary:#2563eb;
+  --success:#16a34a;
+  --warn:#f59e0b;
+  --danger:#dc2626;
+  --bg:#f3f4f6;
+  --card:#ffffff;
+  --border:#e5e7eb;
+}
+
+body{
+  font-family:Segoe UI,Arial;
+  background:var(--bg);
+  margin:0;
+}
+
+.container{
+  max-width:1200px;
+  margin:auto;
+  padding:20px;
+}
+
+.card{
+  background:var(--card);
+  padding:20px;
+  border-radius:12px;
+  margin-bottom:20px;
+  box-shadow:0 10px 25px rgba(0,0,0,.06);
+}
+
+h2,h3{color:var(--primary);margin-top:0}
+
+label{
+  margin-top:10px;
+  display:block;
+  font-weight:600;
+}
+
+input,select{
+  width:100%;
+  padding:10px;
+  margin-top:5px;
+  border-radius:8px;
+  border:1px solid var(--border);
+}
+
+button{
+  margin-top:14px;
+  padding:10px 18px;
+  border:none;
+  border-radius:8px;
+  font-weight:600;
+  cursor:pointer;
+  color:#fff;
+}
+
+.primary{background:var(--primary)}
+.success{background:var(--success)}
+.warn{background:var(--warn)}
+.danger{background:var(--danger)}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:15px;
+}
+
+th,td{
+  border:1px solid var(--border);
+  padding:10px;
+  text-align:center;
+}
+
+th{background:#f1f5f9}
+
 .payment-row{background:#ecfeff}
+
 .logout{text-align:center}
 </style>
 </head>
@@ -36,7 +100,15 @@ th,td{border:1px solid #ddd;padding:8px;text-align:center}
 <select id="farmerSelect"></select>
 
 <label>Work Type</label>
-<input id="workType" placeholder="Enter work type">
+<select id="workType">
+  <option value="">-- Select --</option>
+  <option>దుక్కు</option>
+  <option>లోడింగ్</option>
+  <option>రోటావేటర్</option>
+  <option>జొన్నలు</option>
+  <option>వరిసేను ఆట</option>
+  <option>గత్తం</option>
+</select>
 
 <label>Time (Minutes)</label>
 <input type="number" id="minutes">
@@ -44,7 +116,7 @@ th,td{border:1px solid #ddd;padding:8px;text-align:center}
 <label>Rate per Hour</label>
 <input type="number" id="rate">
 
-<button id="workBtn" onclick="addOrUpdateWork()">Add Work</button>
+<button id="workBtn" class="primary" onclick="addOrUpdateWork()">Add Work</button>
 </div>
 
 <!-- ================= HISTORY ================= -->
@@ -89,10 +161,10 @@ th,td{border:1px solid #ddd;padding:8px;text-align:center}
 <h3>Manage Farmer</h3>
 
 <label>Select Farmer</label>
-<select id="deleteFarmer"></select>
+<select id="deleteFarmerSelect"></select>
 
 <label>Admin Password</label>
-<input type="password" id="confirmAdminPass" placeholder="Enter admin password">
+<input type="password" id="confirmAdminPass">
 
 <button class="danger" onclick="deleteFarmer()">Delete Farmer</button>
 </div>
@@ -139,7 +211,7 @@ async function loadFarmers(){
   farmerSelect.innerHTML = opt;
   historyFarmer.innerHTML = opt;
   payFarmer.innerHTML = opt;
-  deleteFarmer.innerHTML = opt;
+  deleteFarmerSelect.innerHTML = opt;
 }
 
 /* ================= ADD / UPDATE WORK ================= */
@@ -165,7 +237,7 @@ async function addOrUpdateWork(){
     payload.farmerId = farmerSelect.value;
   }
 
-  const res = await fetch(url,{
+  await fetch(url,{
     method,
     headers:{
       "Content-Type":"application/json",
@@ -173,12 +245,6 @@ async function addOrUpdateWork(){
     },
     body: JSON.stringify(payload)
   });
-
-  const data = await res.json();
-  if(!data.success){
-    alert("Work not saved");
-    return;
-  }
 
   editingWorkId = null;
   workBtn.innerText = "Add Work";
@@ -193,7 +259,6 @@ async function loadHistory(){
   if(!historyFarmer.value) return;
   tbody.innerHTML = "";
 
-  /* ---- WORKS ---- */
   const workRes = await fetch(
     API + "/api/admin/work?farmerId=" + historyFarmer.value,
     { headers:{ Authorization:"Bearer " + token() } }
@@ -214,33 +279,28 @@ async function loadHistory(){
           <button onclick="editWork('${w._id}','${w.farmer._id}','${w.workType}',${w.minutes},${w.ratePer60})">Edit</button>
           <button class="danger" onclick="deleteWork('${w._id}')">Delete</button>
         </td>
-      </tr>
-    `;
+      </tr>`;
   });
 
-  /* ---- PAYMENTS ---- */
   const farmerRes = await fetch(API + "/api/admin/farmers", {
     headers:{ Authorization:"Bearer " + token() }
   });
   const farmerData = await farmerRes.json();
   const farmer = farmerData.farmers.find(f=>f._id===historyFarmer.value);
 
-  if(farmer && farmer.payments){
+  if(farmer){
     farmer.payments.forEach(p=>{
       tbody.innerHTML += `
         <tr class="payment-row">
           <td>${new Date(p.date).toLocaleDateString()}</td>
           <td>Payment</td>
-          <td>-</td>
-          <td>-</td>
-          <td>-</td>
+          <td>-</td><td>-</td><td>-</td>
           <td>${p.amount}</td>
           <td>-</td>
           <td>
             <button class="danger" onclick="deletePayment('${farmer._id}','${p._id}')">Delete</button>
           </td>
-        </tr>
-      `;
+        </tr>`;
     });
   }
 }
@@ -260,10 +320,7 @@ function editWork(id, farmerId, type, min, rate){
 
 /* ================= ADD PAYMENT ================= */
 async function addPayment(){
-  if(!payFarmer.value || !payAmount.value){
-    alert("Select farmer and enter amount");
-    return;
-  }
+  if(!payFarmer.value || !payAmount.value) return alert("Fill fields");
 
   await fetch(API + "/api/admin/payment/" + payFarmer.value,{
     method:"POST",
@@ -271,67 +328,46 @@ async function addPayment(){
       "Content-Type":"application/json",
       Authorization:"Bearer " + token()
     },
-    body: JSON.stringify({ amount: Number(payAmount.value) })
+    body: JSON.stringify({ amount:Number(payAmount.value) })
   });
 
-  alert("Payment stored");
   payAmount.value="";
   historyFarmer.value = payFarmer.value;
   loadHistory();
 }
 
 /* ================= DELETE PAYMENT ================= */
-async function deletePayment(farmerId, paymentId){
+async function deletePayment(fid,pid){
   if(!confirm("Delete payment?")) return;
-
-  await fetch(API + "/api/admin/payment/" + farmerId + "/" + paymentId,{
+  await fetch(API + "/api/admin/payment/"+fid+"/"+pid,{
     method:"DELETE",
     headers:{ Authorization:"Bearer " + token() }
   });
-
   loadHistory();
 }
 
 /* ================= DELETE WORK ================= */
 async function deleteWork(id){
   if(!confirm("Delete work?")) return;
-
-  await fetch(API + "/api/admin/work/" + id,{
+  await fetch(API + "/api/admin/work/"+id,{
     method:"DELETE",
     headers:{ Authorization:"Bearer " + token() }
   });
-
   loadHistory();
 }
 
 /* ================= DELETE FARMER ================= */
 async function deleteFarmer(){
-  if(!deleteFarmer.value || !confirmAdminPass.value){
-    alert("Select farmer and enter admin password");
+  if(!deleteFarmerSelect.value || !confirmAdminPass.value){
+    alert("Select farmer & enter password");
     return;
   }
 
-  const verify = await fetch(API + "/api/admin/verify-password",{
-    method:"POST",
-    headers:{
-      "Content-Type":"application/json",
-      Authorization:"Bearer " + token()
-    },
-    body: JSON.stringify({ password: confirmAdminPass.value })
-  });
-
-  const v = await verify.json();
-  if(!v.success){
-    alert("Admin password incorrect");
-    return;
-  }
-
-  await fetch(API + "/api/admin/farmers/" + deleteFarmer.value,{
+  await fetch(API + "/api/admin/farmers/"+deleteFarmerSelect.value,{
     method:"DELETE",
     headers:{ Authorization:"Bearer " + token() }
   });
 
-  alert("Farmer deleted");
   confirmAdminPass.value="";
   loadFarmers();
   tbody.innerHTML="";
@@ -350,9 +386,8 @@ async function changePassword(){
       newPassword: newPass.value
     })
   });
-
-  alert("Password changed");
   oldPass.value=newPass.value="";
+  alert("Password changed");
 }
 
 /* ================= LOGOUT ================= */
