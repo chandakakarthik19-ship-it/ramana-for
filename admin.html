@@ -87,7 +87,7 @@ th{background:#f1f5f9}
 .modal.show{display:flex}
 .modal-box{
   background:#fff;padding:25px;
-  width:340px;border-radius:12px;
+  width:360px;border-radius:12px;
   text-align:center;box-shadow:0 20px 40px rgba(0,0,0,.25)
 }
 .modal-box h3{margin-top:0;color:#dc2626}
@@ -191,7 +191,7 @@ th{background:#f1f5f9}
 <!-- CONFIRM MODAL -->
 <div id="confirmModal" class="modal">
   <div class="modal-box">
-    <h3 id="confirmTitle">Confirm</h3>
+    <h3 id="confirmTitle"></h3>
     <p id="confirmMessage"></p>
     <div class="modal-actions">
       <button class="warn" id="confirmYes">OK</button>
@@ -213,7 +213,7 @@ function showToast(msg,type="success"){
   setTimeout(()=>t.classList.remove("show"),3000);
 }
 
-/* CONFIRM */
+/* CONFIRM MODAL */
 function openConfirm(title,msg,cb){
   confirmTitle.innerText=title;
   confirmMessage.innerText=msg;
@@ -237,26 +237,32 @@ async function loadFarmers(){
   farmerSelect.innerHTML=historyFarmer.innerHTML=payFarmer.innerHTML=deleteFarmerSelect.innerHTML=o;
 }
 
-/* ADD / UPDATE WORK */
-async function addOrUpdateWork(){
+/* ADD / UPDATE WORK (CONFIRM) */
+function addOrUpdateWork(){
   if(!farmerSelect.value||!workType.value||!minutes.value||!rate.value)
     return showToast("Fill all fields","error");
 
-  let url=API+"/api/work/add",method="POST";
-  let body={workType:workType.value,minutes:+minutes.value,ratePer60:+rate.value};
+  const isEdit=!!editingWorkId;
+  openConfirm(
+    isEdit?"Update Work":"Add Work",
+    isEdit?"Update this work?":"Add this work?",
+    async()=>{
+      let url=API+"/api/work/add",method="POST";
+      let body={workType:workType.value,minutes:+minutes.value,ratePer60:+rate.value};
+      if(isEdit){url=API+"/api/work/"+editingWorkId;method="PUT";}
+      else body.farmerId=farmerSelect.value;
 
-  if(editingWorkId){url=API+"/api/work/"+editingWorkId;method="PUT";}
-  else body.farmerId=farmerSelect.value;
+      await fetch(url,{method,headers:{
+        "Content-Type":"application/json",Authorization:"Bearer "+token()
+      },body:JSON.stringify(body)});
 
-  await fetch(url,{method,headers:{
-    "Content-Type":"application/json",Authorization:"Bearer "+token()
-  },body:JSON.stringify(body)});
-
-  showToast(editingWorkId?"Work updated":"Work added");
-  editingWorkId=null; workBtn.innerText="Add Work";
-  workType.value=minutes.value=rate.value="";
-  historyFarmer.value=farmerSelect.value;
-  loadHistory();
+      showToast(isEdit?"Work updated":"Work added");
+      editingWorkId=null; workBtn.innerText="Add Work";
+      workType.value=minutes.value=rate.value="";
+      historyFarmer.value=farmerSelect.value;
+      loadHistory();
+    }
+  );
 }
 
 /* HISTORY */
@@ -316,48 +322,54 @@ function editWork(id,fid,type,min,rate){
   window.scrollTo({top:0,behavior:"smooth"});
 }
 
-/* CONFIRM ACTIONS */
+/* CONFIRM DELETE WORK */
 function confirmDeleteWork(id){
-  openConfirm("Delete Work","Are you sure you want to delete this work?",async()=>{
+  openConfirm("Delete Work","Delete this work?",async()=>{
     await fetch(API+"/api/work/"+id,{method:"DELETE",headers:{Authorization:"Bearer "+token()}});
     showToast("Work deleted","warn"); loadHistory();
   });
 }
+
+/* CONFIRM DELETE PAYMENT */
 function confirmDeletePayment(fid,pid){
-  openConfirm("Delete Payment","Delete this payment permanently?",async()=>{
-    await fetch(API+"/api/admin/payment/"+fid+"/"+pid,{method:"DELETE",headers:{Authorization:"Bearer "+token()}});
+  openConfirm("Delete Payment","Delete this payment?",async()=>{
+    await fetch(API+"/api/admin/payment/"+fid+"/"+pid,{method:"DELETE",
+      headers:{Authorization:"Bearer "+token()}});
     showToast("Payment deleted","warn"); loadHistory();
   });
 }
 
-/* PAYMENT */
-async function addPayment(){
+/* ADD PAYMENT (CONFIRM) */
+function addPayment(){
   if(!payFarmer.value||!payAmount.value)
-    return showToast("Fill fields","error");
-  await fetch(API+"/api/admin/payment/"+payFarmer.value,{
-    method:"POST",headers:{
-      "Content-Type":"application/json",Authorization:"Bearer "+token()
-    },body:JSON.stringify({amount:+payAmount.value})
+    return showToast("Fill all fields","error");
+  openConfirm("Add Payment","Add this payment?",async()=>{
+    await fetch(API+"/api/admin/payment/"+payFarmer.value,{
+      method:"POST",headers:{
+        "Content-Type":"application/json",Authorization:"Bearer "+token()
+      },body:JSON.stringify({amount:+payAmount.value})
+    });
+    showToast("Payment added");
+    payAmount.value="";
+    historyFarmer.value=payFarmer.value;
+    loadHistory();
   });
-  showToast("Payment added");
-  payAmount.value="";
-  historyFarmer.value=payFarmer.value;
-  loadHistory();
 }
 
-/* DELETE FARMER */
+/* DELETE FARMER (CONFIRM) */
 function deleteFarmer(){
   if(!deleteFarmerSelect.value||!confirmAdminPass.value)
     return showToast("Enter admin password","error");
   openConfirm("Delete Farmer","All data will be deleted. Continue?",async()=>{
-    await fetch(API+"/api/admin/farmers/"+deleteFarmerSelect.value,{method:"DELETE",
-      headers:{Authorization:"Bearer "+token()}});
+    await fetch(API+"/api/admin/farmers/"+deleteFarmerSelect.value,{
+      method:"DELETE",headers:{Authorization:"Bearer "+token()}
+    });
     showToast("Farmer deleted","warn");
     confirmAdminPass.value=""; loadFarmers();
   });
 }
 
-/* CHANGE PASSWORD */
+/* CHANGE PASSWORD (CONFIRM) */
 function changePassword(){
   if(!oldPass.value||!newPass.value)
     return showToast("Fill all fields","error");
