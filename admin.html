@@ -163,21 +163,35 @@ th{background:#f1f5f9}
 <!-- MANAGE FARMER -->
 <div class="card">
 <h3>Manage Farmer</h3>
-<label>Farmer</label>
-<select id="deleteFarmerSelect"></select>
-<label>Admin Password</label>
-<input type="password" id="confirmAdminPass">
-<button class="danger" onclick="deleteFarmer()">Delete Farmer</button>
+
+<button class="danger" onclick="toggleFarmerDelete()">Delete Farmer</button>
+
+<div id="farmerDeleteBox" style="display:none;margin-top:15px">
+  <label>Farmer</label>
+  <select id="deleteFarmerSelect"></select>
+
+  <label>Admin Password</label>
+  <input type="password" id="confirmAdminPass">
+
+  <button class="danger" onclick="deleteFarmer()">Confirm Delete</button>
+</div>
 </div>
 
 <!-- CHANGE PASSWORD -->
 <div class="card">
-<h3>Change Admin Password</h3>
-<label>Old Password</label>
-<input type="password" id="oldPass">
-<label>New Password</label>
-<input type="password" id="newPass">
-<button class="warn" onclick="changePassword()">Change Password</button>
+<h3>Admin Settings</h3>
+
+<button class="warn" onclick="toggleChangePassword()">Change Admin Password</button>
+
+<div id="changePassBox" style="display:none;margin-top:15px">
+  <label>Old Password</label>
+  <input type="password" id="oldPass">
+
+  <label>New Password</label>
+  <input type="password" id="newPass">
+
+  <button class="warn" onclick="changePassword()">Update Password</button>
+</div>
 </div>
 
 <div class="logout">
@@ -226,6 +240,16 @@ function closeConfirm(){
 }
 confirmYes.onclick=()=>{ if(confirmCallback) confirmCallback(); closeConfirm(); };
 
+/* TOGGLE BOXES */
+function toggleFarmerDelete(){
+  farmerDeleteBox.style.display =
+    farmerDeleteBox.style.display==="none"?"block":"none";
+}
+function toggleChangePassword(){
+  changePassBox.style.display =
+    changePassBox.style.display==="none"?"block":"none";
+}
+
 document.addEventListener("DOMContentLoaded",loadFarmers);
 
 /* LOAD FARMERS */
@@ -234,17 +258,17 @@ async function loadFarmers(){
   const d=await r.json(); if(!d.success) return;
   let o='<option value="">-- Select --</option>';
   d.farmers.forEach(f=>o+=`<option value="${f._id}">${f.name}</option>`);
-  farmerSelect.innerHTML=historyFarmer.innerHTML=payFarmer.innerHTML=deleteFarmerSelect.innerHTML=o;
+  farmerSelect.innerHTML=historyFarmer.innerHTML=
+  payFarmer.innerHTML=deleteFarmerSelect.innerHTML=o;
 }
 
-/* ADD / UPDATE WORK (CONFIRM) */
+/* ADD / UPDATE WORK */
 function addOrUpdateWork(){
   if(!farmerSelect.value||!workType.value||!minutes.value||!rate.value)
     return showToast("Fill all fields","error");
 
   const isEdit=!!editingWorkId;
-  openConfirm(
-    isEdit?"Update Work":"Add Work",
+  openConfirm(isEdit?"Update Work":"Add Work",
     isEdit?"Update this work?":"Add this work?",
     async()=>{
       let url=API+"/api/work/add",method="POST";
@@ -255,14 +279,12 @@ function addOrUpdateWork(){
       await fetch(url,{method,headers:{
         "Content-Type":"application/json",Authorization:"Bearer "+token()
       },body:JSON.stringify(body)});
-
       showToast(isEdit?"Work updated":"Work added");
       editingWorkId=null; workBtn.innerText="Add Work";
       workType.value=minutes.value=rate.value="";
       historyFarmer.value=farmerSelect.value;
       loadHistory();
-    }
-  );
+    });
 }
 
 /* HISTORY */
@@ -322,7 +344,7 @@ function editWork(id,fid,type,min,rate){
   window.scrollTo({top:0,behavior:"smooth"});
 }
 
-/* CONFIRM DELETE WORK */
+/* DELETE WORK */
 function confirmDeleteWork(id){
   openConfirm("Delete Work","Delete this work?",async()=>{
     await fetch(API+"/api/work/"+id,{method:"DELETE",headers:{Authorization:"Bearer "+token()}});
@@ -330,7 +352,7 @@ function confirmDeleteWork(id){
   });
 }
 
-/* CONFIRM DELETE PAYMENT */
+/* DELETE PAYMENT */
 function confirmDeletePayment(fid,pid){
   openConfirm("Delete Payment","Delete this payment?",async()=>{
     await fetch(API+"/api/admin/payment/"+fid+"/"+pid,{method:"DELETE",
@@ -339,7 +361,7 @@ function confirmDeletePayment(fid,pid){
   });
 }
 
-/* ADD PAYMENT (CONFIRM) */
+/* ADD PAYMENT */
 function addPayment(){
   if(!payFarmer.value||!payAmount.value)
     return showToast("Fill all fields","error");
@@ -356,7 +378,7 @@ function addPayment(){
   });
 }
 
-/* DELETE FARMER (CONFIRM) */
+/* DELETE FARMER */
 function deleteFarmer(){
   if(!deleteFarmerSelect.value||!confirmAdminPass.value)
     return showToast("Enter admin password","error");
@@ -369,7 +391,7 @@ function deleteFarmer(){
   });
 }
 
-/* CHANGE PASSWORD (CONFIRM) */
+/* CHANGE PASSWORD */
 function changePassword(){
   if(!oldPass.value||!newPass.value)
     return showToast("Fill all fields","error");
