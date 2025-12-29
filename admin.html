@@ -52,7 +52,7 @@ th,td{border:1px solid var(--border);padding:10px;text-align:center}
 th{background:#f1f5f9}
 .payment-row{background:#ecfeff}
 
-/* ===== SUMMARY BOXES ===== */
+/* SUMMARY */
 .summary{display:flex;gap:20px;margin:15px 0}
 .box{
   flex:1;background:#f9fafb;border:1px solid var(--border);
@@ -65,15 +65,36 @@ th{background:#f1f5f9}
 .balance{color:var(--danger)}
 @media(max-width:768px){.summary{flex-direction:column}}
 .logout{text-align:center}
+
+/* TOAST */
+.toast{
+  position:fixed;
+  bottom:30px;
+  right:30px;
+  background:#111827;
+  color:#fff;
+  padding:14px 20px;
+  border-radius:10px;
+  font-weight:600;
+  box-shadow:0 10px 25px rgba(0,0,0,.2);
+  opacity:0;
+  pointer-events:none;
+  transform:translateY(20px);
+  transition:.4s ease;
+  z-index:9999;
+}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.success{background:#16a34a}
+.toast.error{background:#dc2626}
+.toast.warn{background:#f59e0b}
 </style>
 </head>
 
 <body>
 <div class="container">
-
 <h2>Admin Dashboard</h2>
 
-<!-- ================= ADD / EDIT WORK ================= -->
+<!-- ADD / EDIT WORK -->
 <div class="card">
 <h3>Add / Edit Work</h3>
 
@@ -100,304 +121,221 @@ th{background:#f1f5f9}
 <button id="workBtn" class="primary" onclick="addOrUpdateWork()">Add Work</button>
 </div>
 
-<!-- ================= HISTORY ================= -->
+<!-- HISTORY -->
 <div class="card">
-<h3>History (Work + Payments)</h3>
-
+<h3>History</h3>
 <label>Select Farmer</label>
 <select id="historyFarmer"></select>
 
 <div class="summary">
-  <div class="box">
-    <label>Total Amount</label>
-    <div class="total" id="adminTotal">₹0</div>
-  </div>
-  <div class="box">
-    <label>Total Paid</label>
-    <div class="paid" id="adminPaid">₹0</div>
-  </div>
-  <div class="box">
-    <label>Balance</label>
-    <div class="balance" id="adminBalance">₹0</div>
-  </div>
+  <div class="box"><label>Total</label><div class="total" id="adminTotal">₹0</div></div>
+  <div class="box"><label>Paid</label><div class="paid" id="adminPaid">₹0</div></div>
+  <div class="box"><label>Balance</label><div class="balance" id="adminBalance">₹0</div></div>
 </div>
 
 <table>
 <thead>
 <tr>
-  <th>Date</th>
-  <th>Type</th>
-  <th>Minutes</th>
-  <th>Rate</th>
-  <th>Total</th>
-  <th>Paid</th>
-  <th>Balance</th>
-  <th>Action</th>
+<th>Date</th><th>Type</th><th>Min</th><th>Rate</th>
+<th>Total</th><th>Paid</th><th>Balance</th><th>Action</th>
 </tr>
 </thead>
 <tbody id="tbody"></tbody>
 </table>
 </div>
 
-<!-- ================= PAYMENT ================= -->
+<!-- PAYMENT -->
 <div class="card">
 <h3>Add Payment</h3>
-
-<label>Select Farmer</label>
+<label>Farmer</label>
 <select id="payFarmer"></select>
-
 <label>Amount</label>
 <input type="number" id="payAmount">
-
 <button class="success" onclick="addPayment()">Add Payment</button>
 </div>
 
-<!-- ================= MANAGE FARMER ================= -->
+<!-- MANAGE FARMER -->
 <div class="card">
 <h3>Manage Farmer</h3>
-
-<label>Select Farmer</label>
+<label>Farmer</label>
 <select id="deleteFarmerSelect"></select>
-
 <label>Admin Password</label>
 <input type="password" id="confirmAdminPass">
-
 <button class="danger" onclick="deleteFarmer()">Delete Farmer</button>
 </div>
 
-<!-- ================= CHANGE ADMIN PASSWORD ================= -->
+<!-- CHANGE PASSWORD -->
 <div class="card">
 <h3>Change Admin Password</h3>
-
 <label>Old Password</label>
 <input type="password" id="oldPass">
-
 <label>New Password</label>
 <input type="password" id="newPass">
-
 <button class="warn" onclick="changePassword()">Change Password</button>
 </div>
 
 <div class="logout">
 <button class="danger" onclick="logout()">Logout</button>
 </div>
-
 </div>
 
+<div id="toast" class="toast"></div>
+
 <script>
-const API = "https://ramana-back.onrender.com";
-const token = () => localStorage.getItem("token");
-let editingWorkId = null;
+const API="https://ramana-back.onrender.com";
+const token=()=>localStorage.getItem("token");
+let editingWorkId=null;
 
-document.addEventListener("DOMContentLoaded", loadFarmers);
-
-/* ================= LOAD FARMERS ================= */
-async function loadFarmers(){
-  const res = await fetch(API + "/api/admin/farmers",{
-    headers:{ Authorization:"Bearer " + token() }
-  });
-  const data = await res.json();
-  if(!data.success) return;
-
-  let opt = '<option value="">-- Select Farmer --</option>';
-  data.farmers.forEach(f=>{
-    opt += `<option value="${f._id}">${f.name}</option>`;
-  });
-
-  farmerSelect.innerHTML = opt;
-  historyFarmer.innerHTML = opt;
-  payFarmer.innerHTML = opt;
-  deleteFarmerSelect.innerHTML = opt;
+/* TOAST */
+function showToast(msg,type="success"){
+  const t=document.getElementById("toast");
+  t.innerText=msg;
+  t.className="toast show "+type;
+  setTimeout(()=>t.classList.remove("show"),3000);
 }
 
-/* ================= ADD / UPDATE WORK ================= */
+document.addEventListener("DOMContentLoaded",loadFarmers);
+
+/* LOAD FARMERS */
+async function loadFarmers(){
+  const r=await fetch(API+"/api/admin/farmers",{headers:{Authorization:"Bearer "+token()}});
+  const d=await r.json(); if(!d.success) return;
+  let o='<option value="">-- Select --</option>';
+  d.farmers.forEach(f=>o+=`<option value="${f._id}">${f.name}</option>`);
+  farmerSelect.innerHTML=historyFarmer.innerHTML=payFarmer.innerHTML=deleteFarmerSelect.innerHTML=o;
+}
+
+/* ADD / UPDATE WORK */
 async function addOrUpdateWork(){
-  if(!farmerSelect.value || !workType.value || !minutes.value || !rate.value){
-    alert("Fill all fields");
-    return;
-  }
+  if(!farmerSelect.value||!workType.value||!minutes.value||!rate.value)
+    return showToast("Fill all fields","error");
 
-  let url = API + "/api/work/add";
-  let method = "POST";
+  let url=API+"/api/work/add",method="POST";
+  let body={workType:workType.value,minutes:+minutes.value,ratePer60:+rate.value};
 
-  const payload = {
-    workType: workType.value,
-    minutes:Number(minutes.value),
-    ratePer60:Number(rate.value)
-  };
+  if(editingWorkId){url=API+"/api/work/"+editingWorkId;method="PUT";}
+  else body.farmerId=farmerSelect.value;
 
-  if(editingWorkId){
-    url = API + "/api/work/" + editingWorkId;
-    method = "PUT";
-  } else {
-    payload.farmerId = farmerSelect.value;
-  }
+  await fetch(url,{method,headers:{
+    "Content-Type":"application/json",Authorization:"Bearer "+token()
+  },body:JSON.stringify(body)});
 
-  await fetch(url,{
-    method,
-    headers:{
-      "Content-Type":"application/json",
-      Authorization:"Bearer " + token()
-    },
-    body:JSON.stringify(payload)
-  });
-
-  editingWorkId = null;
-  workBtn.innerText = "Add Work";
-  workType.value = minutes.value = rate.value = "";
-
-  historyFarmer.value = farmerSelect.value;
+  showToast(editingWorkId?"Work updated":"Work added");
+  editingWorkId=null; workBtn.innerText="Add Work";
+  workType.value=minutes.value=rate.value="";
+  historyFarmer.value=farmerSelect.value;
   loadHistory();
 }
 
-/* ================= LOAD HISTORY ================= */
+/* HISTORY */
 async function loadHistory(){
   if(!historyFarmer.value) return;
-  tbody.innerHTML = "";
+  tbody.innerHTML=""; let total=0,paid=0;
 
-  let total = 0;
-  let paid  = 0;
+  const w=await fetch(API+"/api/admin/work?farmerId="+historyFarmer.value,
+    {headers:{Authorization:"Bearer "+token()}});
+  const wd=await w.json();
 
-  const workRes = await fetch(
-    API + "/api/admin/work?farmerId=" + historyFarmer.value,
-    { headers:{ Authorization:"Bearer " + token() } }
-  );
-  const workData = await workRes.json();
-
-  workData.works.forEach(w=>{
-    total += w.totalAmount || 0;
-    tbody.innerHTML += `
-      <tr>
-        <td>${new Date(w.date).toLocaleDateString()}</td>
-        <td>${w.workType}</td>
-        <td>${w.minutes}</td>
-        <td>${w.ratePer60}</td>
-        <td>${w.totalAmount}</td>
-        <td>${w.paymentGiven || 0}</td>
-        <td>${w.totalAmount - (w.paymentGiven||0)}</td>
-        <td>
-          <button class="primary"
-            onclick="editWork('${w._id}','${w.farmer._id}','${w.workType}',${w.minutes},${w.ratePer60})">Edit</button>
-          <button class="danger" onclick="deleteWork('${w._id}')">Delete</button>
-        </td>
-      </tr>`;
+  wd.works.forEach(x=>{
+    total+=x.totalAmount;
+    tbody.innerHTML+=`
+<tr>
+<td>${new Date(x.date).toLocaleDateString()}</td>
+<td>${x.workType}</td>
+<td>${x.minutes}</td>
+<td>${x.ratePer60}</td>
+<td>${x.totalAmount}</td>
+<td>${x.paymentGiven||0}</td>
+<td>${x.totalAmount-(x.paymentGiven||0)}</td>
+<td>
+<button class="primary" onclick="editWork('${x._id}','${x.farmer._id}','${x.workType}',${x.minutes},${x.ratePer60})">Edit</button>
+<button class="danger" onclick="deleteWork('${x._id}')">Delete</button>
+</td></tr>`;
   });
 
-  const farmerRes = await fetch(API + "/api/admin/farmers",{
-    headers:{ Authorization:"Bearer " + token() }
+  const fr=await fetch(API+"/api/admin/farmers",{headers:{Authorization:"Bearer "+token()}});
+  const fd=await fr.json();
+  const f=fd.farmers.find(x=>x._id===historyFarmer.value);
+  if(f) f.payments.forEach(p=>{
+    paid+=p.amount;
+    tbody.innerHTML+=`
+<tr class="payment-row">
+<td>${new Date(p.date).toLocaleDateString()}</td>
+<td>Payment</td><td>-</td><td>-</td><td>-</td>
+<td>${p.amount}</td><td>-</td>
+<td><button class="danger" onclick="deletePayment('${f._id}','${p._id}')">Delete</button></td>
+</tr>`;
   });
-  const farmerData = await farmerRes.json();
-  const farmer = farmerData.farmers.find(f=>f._id===historyFarmer.value);
 
-  if(farmer){
-    farmer.payments.forEach(p=>{
-      paid += p.amount || 0;
-      tbody.innerHTML += `
-        <tr class="payment-row">
-          <td>${new Date(p.date).toLocaleDateString()}</td>
-          <td>Payment</td>
-          <td>-</td><td>-</td><td>-</td>
-          <td>${p.amount}</td>
-          <td>-</td>
-          <td>
-            <button class="danger"
-              onclick="deletePayment('${farmer._id}','${p._id}')">Delete</button>
-          </td>
-        </tr>`;
-    });
-  }
+  adminTotal.innerText="₹"+total;
+  adminPaid.innerText="₹"+paid;
+  adminBalance.innerText="₹"+(total-paid);
+}
+historyFarmer.onchange=loadHistory;
 
-  adminTotal.innerText = "₹" + total;
-  adminPaid.innerText  = "₹" + paid;
-  adminBalance.innerText = "₹" + (total - paid);
+/* EDIT WORK */
+function editWork(id,fid,type,min,rate){
+  editingWorkId=id;
+  farmerSelect.value=fid;
+  workType.value=type;
+  minutes.value=min;
+  rate.value=rate;
+  workBtn.innerText="Update Work";
+  window.scrollTo({top:0,behavior:"smooth"});
 }
 
-historyFarmer.onchange = loadHistory;
-
-/* ================= EDIT WORK ================= */
-function editWork(id, farmerId, type, min, rate){
-  editingWorkId = id;
-  farmerSelect.value = farmerId;
-  workType.value = type;
-  minutes.value = min;
-  rate.value = rate;
-  workBtn.innerText = "Update Work";
-  window.scrollTo({ top: 0, behavior: "smooth" });
-}
-
-/* ================= ADD PAYMENT ================= */
+/* PAYMENT */
 async function addPayment(){
-  if(!payFarmer.value || !payAmount.value) return alert("Fill fields");
-  await fetch(API + "/api/admin/payment/" + payFarmer.value,{
-    method:"POST",
-    headers:{
-      "Content-Type":"application/json",
-      Authorization:"Bearer " + token()
-    },
-    body:JSON.stringify({ amount:Number(payAmount.value) })
+  if(!payFarmer.value||!payAmount.value)
+    return showToast("Fill fields","error");
+  await fetch(API+"/api/admin/payment/"+payFarmer.value,{
+    method:"POST",headers:{
+      "Content-Type":"application/json",Authorization:"Bearer "+token()
+    },body:JSON.stringify({amount:+payAmount.value})
   });
+  showToast("Payment added");
   payAmount.value="";
-  historyFarmer.value = payFarmer.value;
+  historyFarmer.value=payFarmer.value;
   loadHistory();
 }
 
-/* ================= DELETE WORK ================= */
+/* DELETE WORK */
 async function deleteWork(id){
   if(!confirm("Delete work?")) return;
-  await fetch(API + "/api/work/" + id,{
-    method:"DELETE",
-    headers:{ Authorization:"Bearer " + token() }
-  });
-  loadHistory();
+  await fetch(API+"/api/work/"+id,{method:"DELETE",headers:{Authorization:"Bearer "+token()}});
+  showToast("Work deleted","warn"); loadHistory();
 }
 
-/* ================= DELETE PAYMENT ================= */
+/* DELETE PAYMENT */
 async function deletePayment(fid,pid){
   if(!confirm("Delete payment?")) return;
-  await fetch(API + "/api/admin/payment/"+fid+"/"+pid,{
-    method:"DELETE",
-    headers:{ Authorization:"Bearer " + token() }
-  });
-  loadHistory();
+  await fetch(API+"/api/admin/payment/"+fid+"/"+pid,{method:"DELETE",
+    headers:{Authorization:"Bearer "+token()}});
+  showToast("Payment deleted","warn"); loadHistory();
 }
 
-/* ================= DELETE FARMER ================= */
+/* DELETE FARMER */
 async function deleteFarmer(){
-  if(!deleteFarmerSelect.value || !confirmAdminPass.value){
-    alert("Select farmer & enter password");
-    return;
-  }
-  await fetch(API + "/api/admin/farmers/"+deleteFarmerSelect.value,{
-    method:"DELETE",
-    headers:{ Authorization:"Bearer " + token() }
-  });
-  confirmAdminPass.value="";
-  loadFarmers();
+  if(!deleteFarmerSelect.value||!confirmAdminPass.value)
+    return showToast("Enter password","error");
+  await fetch(API+"/api/admin/farmers/"+deleteFarmerSelect.value,{
+    method:"DELETE",headers:{Authorization:"Bearer "+token()}});
+  showToast("Farmer deleted","warn");
+  confirmAdminPass.value=""; loadFarmers();
 }
 
-/* ================= CHANGE PASSWORD ================= */
+/* CHANGE PASSWORD */
 async function changePassword(){
-  await fetch(API + "/api/admin/change-password",{
-    method:"POST",
-    headers:{
-      "Content-Type":"application/json",
-      Authorization:"Bearer " + token()
-    },
-    body:JSON.stringify({
-      oldPassword:oldPass.value,
-      newPassword:newPass.value
-    })
+  await fetch(API+"/api/admin/change-password",{method:"POST",
+    headers:{"Content-Type":"application/json",Authorization:"Bearer "+token()},
+    body:JSON.stringify({oldPassword:oldPass.value,newPassword:newPass.value})
   });
+  showToast("Password changed");
   oldPass.value=newPass.value="";
-  alert("Password changed");
 }
 
-/* ================= LOGOUT ================= */
-function logout(){
-  localStorage.clear();
-  location.href="index.html";
-}
+/* LOGOUT */
+function logout(){localStorage.clear();location.href="index.html";}
 </script>
-
 </body>
 </html>
