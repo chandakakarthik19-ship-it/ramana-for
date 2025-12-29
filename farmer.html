@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Farmer Dashboard</title>
 
- <style>
+  <style>
     :root{
       --primary:#2563eb;
       --success:#16a34a;
@@ -45,7 +45,6 @@
       margin-bottom:20px;
     }
 
-    /* INFO HEADER */
     .info{
       display:flex;
       justify-content:space-between;
@@ -77,7 +76,6 @@
       background:var(--danger);
     }
 
-    /* SUMMARY BOXES */
     .summary{
       display:flex;
       gap:20px;
@@ -107,23 +105,17 @@
     .paid{ color:var(--success); }
     .balance{ color:var(--danger); }
 
-    h3{
-      margin-top:30px;
-      margin-bottom:10px;
-    }
-
-    /* TABLE */
     table{
       width:100%;
       border-collapse:collapse;
       margin-top:10px;
-      background:rgb(208, 244, 6);
+      background:#fff;
       border-radius:10px;
       overflow:hidden;
     }
 
     th{
-      background:#ef0591;
+      background:#f1f5f9;
       padding:12px;
       font-size:13px;
       font-weight:600;
@@ -138,8 +130,9 @@
       font-size:14px;
     }
 
-    tr:hover{
-      background:#f9fafb;
+    tr.payment{
+      background:#ecfeff;
+      font-weight:600;
     }
 
     .empty{
@@ -149,13 +142,8 @@
     }
 
     @media(max-width:768px){
-      .summary{
-        flex-direction:column;
-      }
-      .info{
-        flex-direction:column;
-        align-items:flex-start;
-      }
+      .summary{ flex-direction:column; }
+      .info{ flex-direction:column; align-items:flex-start; }
     }
   </style>
 </head>
@@ -163,46 +151,45 @@
 <body>
 <div class="container">
 
-  <h1>Farmer Dashboard</h1>
+<h1>Farmer Dashboard</h1>
 
-  <div class="card">
+<div class="card">
 
-    <div class="info" id="info"></div>
+  <div class="info" id="info"></div>
 
-    <div class="summary">
-      <div class="box">
-        <label>Total Amount</label>
-        <div class="total" id="totalBox">₹0</div>
-      </div>
-      <div class="box">
-        <label>Total Paid</label>
-        <div class="paid" id="paidBox">₹0</div>
-      </div>
-      <div class="box">
-        <label>Balance</label>
-        <div class="balance" id="balanceBox">₹0</div>
-      </div>
+  <div class="summary">
+    <div class="box">
+      <label>Total Amount</label>
+      <div class="total" id="totalBox">₹0</div>
     </div>
-
-    <h3>Work History</h3>
-
-    <table id="historyTable">
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Work Type</th>
-          <th>Minutes</th>
-          <th>Rate / 60</th>
-          <th>Total</th>
-          <th>Paid</th>
-          <th>Notes</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-
+    <div class="box">
+      <label>Total Paid</label>
+      <div class="paid" id="paidBox">₹0</div>
+    </div>
+    <div class="box">
+      <label>Balance</label>
+      <div class="balance" id="balanceBox">₹0</div>
+    </div>
   </div>
 
+  <h3>Work & Payment History</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Type</th>
+        <th>Minutes</th>
+        <th>Rate / 60</th>
+        <th>Total</th>
+        <th>Paid</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+
+</div>
 </div>
 
 <script>
@@ -210,7 +197,7 @@ const API = "https://ramana-back.onrender.com";
 
 async function load(){
   const token = localStorage.getItem("token");
-  const name = localStorage.getItem("name");
+  const name  = localStorage.getItem("name");
 
   if(!token){
     location.href = "farmer-login.html";
@@ -227,49 +214,63 @@ async function load(){
     </div>
   `;
 
-  const res = await fetch(API + "/api/work/my", {
+  const res = await fetch(API + "/api/farmer/dashboard", {
     headers:{ Authorization:"Bearer " + token }
   });
 
-  /* 🔴 IMPORTANT: handle auth errors */
   if(res.status === 401 || res.status === 403){
-    alert("Session expired. Please login again.");
+    alert("Session expired. Login again.");
     localStorage.clear();
     location.href = "farmer-login.html";
     return;
   }
 
   const data = await res.json();
-  const works = data.works || [];
-
-  const tbody = document.querySelector("#historyTable tbody");
+  const tbody = document.getElementById("tbody");
   tbody.innerHTML = "";
 
-  let total = 0, paid = 0;
+  document.getElementById("paidBox").innerText = "₹" + (data.farmer.totalPaid || 0);
+  document.getElementById("balanceBox").innerText = "₹" + (data.farmer.balance || 0);
 
-  if(!works.length){
-    tbody.innerHTML = `<tr><td colspan="7" class="empty">No records found</td></tr>`;
-  } else {
-    works.forEach(w=>{
+  let total = 0;
+
+  if(data.works.length){
+    data.works.forEach(w=>{
       total += w.totalAmount || 0;
-      paid += w.paymentGiven || 0;
 
       tbody.innerHTML += `
         <tr>
           <td>${new Date(w.date).toLocaleDateString()}</td>
-          <td>${w.workType || "-"}</td>
-          <td>${w.minutes || 0}</td>
-          <td>₹${w.ratePer60 || 0}</td>
-          <td>₹${(w.totalAmount||0).toFixed(2)}</td>
-          <td>₹${(w.paymentGiven||0).toFixed(2)}</td>
-          <td>${w.notes || "-"}</td>
+          <td>${w.workType}</td>
+          <td>${w.minutes}</td>
+          <td>₹${w.ratePer60}</td>
+          <td>₹${w.totalAmount}</td>
+          <td>₹${w.paymentGiven || 0}</td>
+          <td>-</td>
         </tr>`;
     });
   }
 
-  document.getElementById("totalBox").innerText = "₹" + total.toFixed(2);
-  document.getElementById("paidBox").innerText = "₹" + paid.toFixed(2);
-  document.getElementById("balanceBox").innerText = "₹" + (total - paid).toFixed(2);
+  if(data.farmer.payments.length){
+    data.farmer.payments.forEach(p=>{
+      tbody.innerHTML += `
+        <tr class="payment">
+          <td>${new Date(p.date).toLocaleDateString()}</td>
+          <td>Payment</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-₹${p.amount}</td>
+          <td>-</td>
+        </tr>`;
+    });
+  }
+
+  if(!data.works.length && !data.farmer.payments.length){
+    tbody.innerHTML = `<tr><td colspan="7" class="empty">No records found</td></tr>`;
+  }
+
+  document.getElementById("totalBox").innerText = "₹" + total;
 }
 
 function logout(){
