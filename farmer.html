@@ -1,151 +1,43 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Farmer Dashboard</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Farmer Dashboard</title>
 
-  <style>
-    :root{
-      --primary:#2563eb;
-      --success:#16a34a;
-      --danger:#dc2626;
-      --bg:#f3f4f6;
-      --card:#ffffff;
-      --border:#e5e7eb;
-      --text:#1f2937;
-      --muted:#6b7280;
-    }
-
-    *{ box-sizing:border-box; }
-
-    body{
-      margin:0;
-      font-family:"Segoe UI", Tahoma, Arial, sans-serif;
-      background:var(--bg);
-      color:var(--text);
-    }
-
-    .container{
-      max-width:1200px;
-      margin:auto;
-      padding:20px;
-    }
-
-    h1{
-      color:var(--primary);
-      margin-bottom:15px;
-    }
-
-    .card{
-      background:var(--card);
-      border-radius:12px;
-      padding:25px;
-      box-shadow:0 10px 25px rgba(0,0,0,0.06);
-      margin-bottom:20px;
-    }
-
-    .info{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      flex-wrap:wrap;
-      gap:15px;
-    }
-
-    .info strong{
-      font-size:18px;
-    }
-
-    .info span{
-      color:var(--muted);
-      font-size:14px;
-    }
-
-    .actions a{
-      text-decoration:none;
-      font-weight:600;
-      padding:8px 14px;
-      border-radius:8px;
-      color:white;
-      background:var(--primary);
-      margin-left:8px;
-    }
-
-    .logout{
-      background:var(--danger);
-    }
-
-    .summary{
-      display:flex;
-      gap:20px;
-      margin-top:20px;
-    }
-
-    .box{
-      flex:1;
-      background:#f9fafb;
-      border:1px solid var(--border);
-      border-radius:10px;
-      padding:18px;
-    }
-
-    .box label{
-      font-size:13px;
-      color:var(--muted);
-    }
-
-    .box div{
-      margin-top:6px;
-      font-size:22px;
-      font-weight:700;
-    }
-
-    .total{ color:#2563eb; }
-    .paid{ color:var(--success); }
-    .balance{ color:var(--danger); }
-
-    table{
-      width:100%;
-      border-collapse:collapse;
-      margin-top:10px;
-      background:#fff;
-      border-radius:10px;
-      overflow:hidden;
-    }
-
-    th{
-      background:#f1f5f9;
-      padding:12px;
-      font-size:13px;
-      font-weight:600;
-      color:#374151;
-      border-bottom:1px solid var(--border);
-      text-align:left;
-    }
-
-    td{
-      padding:12px;
-      border-bottom:1px solid var(--border);
-      font-size:14px;
-    }
-
-    tr.payment{
-      background:#ecfeff;
-      font-weight:600;
-    }
-
-    .empty{
-      text-align:center;
-      color:var(--muted);
-      padding:20px;
-    }
-
-    @media(max-width:768px){
-      .summary{ flex-direction:column; }
-      .info{ flex-direction:column; align-items:flex-start; }
-    }
-  </style>
+<style>
+:root{
+  --primary:#2563eb;
+  --success:#16a34a;
+  --danger:#dc2626;
+  --bg:#f3f4f6;
+  --card:#ffffff;
+  --border:#e5e7eb;
+  --text:#1f2937;
+  --muted:#6b7280;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Segoe UI,Arial;background:var(--bg);color:var(--text)}
+.container{max-width:1200px;margin:auto;padding:20px}
+h1{color:var(--primary)}
+.card{background:var(--card);padding:25px;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.06)}
+.info{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.actions a{color:#fff;text-decoration:none;padding:8px 14px;border-radius:8px;background:var(--primary);font-weight:600}
+.actions .logout{background:var(--danger)}
+.summary{display:flex;gap:20px;margin:20px 0}
+.box{flex:1;background:#f9fafb;border:1px solid var(--border);border-radius:10px;padding:18px}
+.box label{font-size:13px;color:var(--muted)}
+.box div{font-size:22px;font-weight:700;margin-top:6px}
+.total{color:var(--primary)}
+.paid{color:var(--success)}
+.balance{color:var(--danger)}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{padding:12px;border-bottom:1px solid var(--border);text-align:left}
+th{background:#f1f5f9}
+tr.payment{background:#ecfeff;font-weight:600}
+.empty{text-align:center;color:var(--muted)}
+@media(max-width:768px){.summary{flex-direction:column}}
+</style>
 </head>
 
 <body>
@@ -195,7 +87,7 @@
 <script>
 const API = "https://ramana-back.onrender.com";
 
-async function load(){
+async function loadDashboard(){
   const token = localStorage.getItem("token");
   const name  = localStorage.getItem("name");
 
@@ -214,7 +106,7 @@ async function load(){
     </div>
   `;
 
-  const res = await fetch(API + "/api/farmer/dashboard", {
+  const res = await fetch(API + "/api/farmer/dashboard",{
     headers:{ Authorization:"Bearer " + token }
   });
 
@@ -229,11 +121,10 @@ async function load(){
   const tbody = document.getElementById("tbody");
   tbody.innerHTML = "";
 
-  document.getElementById("paidBox").innerText = "₹" + (data.farmer.totalPaid || 0);
-  document.getElementById("balanceBox").innerText = "₹" + (data.farmer.balance || 0);
-
   let total = 0;
+  let paid  = 0;
 
+  /* ===== WORKS ===== */
   if(data.works.length){
     data.works.forEach(w=>{
       total += w.totalAmount || 0;
@@ -251,8 +142,11 @@ async function load(){
     });
   }
 
+  /* ===== PAYMENTS ===== */
   if(data.farmer.payments.length){
     data.farmer.payments.forEach(p=>{
+      paid += p.amount || 0;
+
       tbody.innerHTML += `
         <tr class="payment">
           <td>${new Date(p.date).toLocaleDateString()}</td>
@@ -270,7 +164,10 @@ async function load(){
     tbody.innerHTML = `<tr><td colspan="7" class="empty">No records found</td></tr>`;
   }
 
+  /* ===== SUMMARY ===== */
   document.getElementById("totalBox").innerText = "₹" + total;
+  document.getElementById("paidBox").innerText  = "₹" + paid;
+  document.getElementById("balanceBox").innerText = "₹" + (total - paid);
 }
 
 function logout(){
@@ -278,7 +175,7 @@ function logout(){
   location.href = "farmer-login.html";
 }
 
-load();
+loadDashboard();
 </script>
 
 </body>
