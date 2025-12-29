@@ -16,22 +16,14 @@
   --border:#e5e7eb;
   --muted:#6b7280;
 }
-body{
-  font-family:Segoe UI,Arial;
-  background:var(--bg);
-  margin:0;
-}
-.container{
-  max-width:1200px;
-  margin:auto;
-  padding:20px;
-}
+body{font-family:Segoe UI,Arial;background:var(--bg);margin:0}
+.container{max-width:1200px;margin:auto;padding:20px}
 .card{
   background:var(--card);
   padding:20px;
   border-radius:12px;
   margin-bottom:20px;
-  box-shadow:0 10px 25px rgba(0,0,0,.06);
+  box-shadow:0 10px 25px rgba(0,0,0,.06)
 }
 h2,h3{color:var(--primary);margin-top:0}
 label{display:block;margin-top:10px;font-weight:600}
@@ -40,7 +32,7 @@ input,select{
   padding:10px;
   margin-top:5px;
   border-radius:8px;
-  border:1px solid var(--border);
+  border:1px solid var(--border)
 }
 button{
   margin-top:14px;
@@ -49,37 +41,22 @@ button{
   border-radius:8px;
   font-weight:600;
   cursor:pointer;
-  color:#fff;
+  color:#fff
 }
 .primary{background:var(--primary)}
 .success{background:var(--success)}
 .warn{background:var(--warn)}
 .danger{background:var(--danger)}
-table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:15px;
-}
-th,td{
-  border:1px solid var(--border);
-  padding:10px;
-  text-align:center;
-}
+table{width:100%;border-collapse:collapse;margin-top:15px}
+th,td{border:1px solid var(--border);padding:10px;text-align:center}
 th{background:#f1f5f9}
 .payment-row{background:#ecfeff}
 
 /* ===== SUMMARY BOXES ===== */
-.summary{
-  display:flex;
-  gap:20px;
-  margin:15px 0;
-}
+.summary{display:flex;gap:20px;margin:15px 0}
 .box{
-  flex:1;
-  background:#f9fafb;
-  border:1px solid var(--border);
-  border-radius:10px;
-  padding:16px;
+  flex:1;background:#f9fafb;border:1px solid var(--border);
+  border-radius:10px;padding:16px
 }
 .box label{font-size:13px;color:var(--muted)}
 .box div{font-size:22px;font-weight:700;margin-top:6px}
@@ -130,7 +107,6 @@ th{background:#f1f5f9}
 <label>Select Farmer</label>
 <select id="historyFarmer"></select>
 
-<!-- SUMMARY BOXES -->
 <div class="summary">
   <div class="box">
     <label>Total Amount</label>
@@ -189,7 +165,7 @@ th{background:#f1f5f9}
 <button class="danger" onclick="deleteFarmer()">Delete Farmer</button>
 </div>
 
-<!-- ================= CHANGE PASSWORD ================= -->
+<!-- ================= CHANGE ADMIN PASSWORD ================= -->
 <div class="card">
 <h3>Change Admin Password</h3>
 
@@ -241,15 +217,24 @@ async function addOrUpdateWork(){
     return;
   }
 
+  let url = API + "/api/work/add";
+  let method = "POST";
+
   const payload = {
-    farmerId: farmerSelect.value,
     workType: workType.value,
     minutes:Number(minutes.value),
     ratePer60:Number(rate.value)
   };
 
-  await fetch(API + "/api/work/add",{
-    method:"POST",
+  if(editingWorkId){
+    url = API + "/api/work/" + editingWorkId;
+    method = "PUT";
+  } else {
+    payload.farmerId = farmerSelect.value;
+  }
+
+  await fetch(url,{
+    method,
     headers:{
       "Content-Type":"application/json",
       Authorization:"Bearer " + token()
@@ -257,12 +242,15 @@ async function addOrUpdateWork(){
     body:JSON.stringify(payload)
   });
 
+  editingWorkId = null;
+  workBtn.innerText = "Add Work";
   workType.value = minutes.value = rate.value = "";
+
   historyFarmer.value = farmerSelect.value;
   loadHistory();
 }
 
-/* ================= LOAD HISTORY + SUMMARY ================= */
+/* ================= LOAD HISTORY ================= */
 async function loadHistory(){
   if(!historyFarmer.value) return;
   tbody.innerHTML = "";
@@ -288,6 +276,8 @@ async function loadHistory(){
         <td>${w.paymentGiven || 0}</td>
         <td>${w.totalAmount - (w.paymentGiven||0)}</td>
         <td>
+          <button class="primary"
+            onclick="editWork('${w._id}','${w.farmer._id}','${w.workType}',${w.minutes},${w.ratePer60})">Edit</button>
           <button class="danger" onclick="deleteWork('${w._id}')">Delete</button>
         </td>
       </tr>`;
@@ -310,7 +300,8 @@ async function loadHistory(){
           <td>${p.amount}</td>
           <td>-</td>
           <td>
-            <button class="danger" onclick="deletePayment('${farmer._id}','${p._id}')">Delete</button>
+            <button class="danger"
+              onclick="deletePayment('${farmer._id}','${p._id}')">Delete</button>
           </td>
         </tr>`;
     });
@@ -322,6 +313,17 @@ async function loadHistory(){
 }
 
 historyFarmer.onchange = loadHistory;
+
+/* ================= EDIT WORK ================= */
+function editWork(id, farmerId, type, min, rate){
+  editingWorkId = id;
+  farmerSelect.value = farmerId;
+  workType.value = type;
+  minutes.value = min;
+  rate.value = rate;
+  workBtn.innerText = "Update Work";
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
 
 /* ================= ADD PAYMENT ================= */
 async function addPayment(){
