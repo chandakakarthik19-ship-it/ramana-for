@@ -1,175 +1,217 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Farmer Login</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Farmer Login</title>
 
-  <style>
-    :root{
-      --primary:#2563eb;
-      --bg:#f3f4f6;
-      --card:#ffffff;
-      --border:#e5e7eb;
-      --text:#1f2937;
-      --muted:#6b7280;
-    }
+<style>
+:root{
+  --primary:#2563eb;
+  --bg:#f3f4f6;
+  --card:#ffffff;
+  --border:#e5e7eb;
+  --text:#1f2937;
+  --muted:#6b7280;
+}
 
-    *{ box-sizing:border-box; }
+*{ box-sizing:border-box; }
 
-    body{
-      margin:0;
-      font-family:"Segoe UI", Tahoma, Arial, sans-serif;
-      background:var(--bg);
-      color:var(--text);
-    }
+body{
+  margin:0;
+  font-family:"Segoe UI", Tahoma, Arial, sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
 
-    .container{
-      min-height:100vh;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:20px;
-    }
+.container{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
 
-    .card{
-      width:100%;
-      max-width:420px;
-      background:var(--card);
-      padding:30px;
-      border-radius:12px;
-      box-shadow:0 10px 25px rgba(0,0,0,0.08);
-    }
+.card{
+  width:100%;
+  max-width:420px;
+  background:var(--card);
+  padding:30px;
+  border-radius:12px;
+  box-shadow:0 10px 25px rgba(0,0,0,0.08);
+}
 
-    h1{
-      text-align:center;
-      color:var(--primary);
-      margin-bottom:20px;
-    }
+h1{
+  text-align:center;
+  color:var(--primary);
+  margin-bottom:20px;
+}
 
-    label{
-      display:block;
-      margin-top:14px;
-      font-weight:600;
-      font-size:14px;
-    }
+label{
+  display:block;
+  margin-top:14px;
+  font-weight:600;
+  font-size:14px;
+}
 
-    input{
-      width:100%;
-      padding:10px 12px;
-      margin-top:6px;
-      border:1px solid var(--border);
-      border-radius:8px;
-      font-size:14px;
-    }
+input{
+  width:100%;
+  padding:10px 12px;
+  margin-top:6px;
+  border:1px solid var(--border);
+  border-radius:8px;
+  font-size:14px;
+}
 
-    input:focus{
-      outline:none;
-      border-color:var(--primary);
-      box-shadow:0 0 0 2px rgba(37,99,235,0.15);
-    }
+button{
+  width:100%;
+  margin-top:20px;
+  padding:12px;
+  background:var(--primary);
+  color:white;
+  border:none;
+  border-radius:8px;
+  font-size:15px;
+  font-weight:600;
+  cursor:pointer;
+}
 
-    button{
-      width:100%;
-      margin-top:20px;
-      padding:12px;
-      background:var(--primary);
-      color:white;
-      border:none;
-      border-radius:8px;
-      font-size:15px;
-      font-weight:600;
-      cursor:pointer;
-    }
+button:hover{ opacity:0.9; }
 
-    button:hover{
-      opacity:0.9;
-    }
+p{
+  text-align:center;
+  margin-top:15px;
+  font-size:14px;
+  color:var(--muted);
+}
 
-    p{
-      text-align:center;
-      margin-top:15px;
-      font-size:14px;
-      color:var(--muted);
-    }
+a{
+  color:var(--primary);
+  text-decoration:none;
+  font-weight:600;
+  cursor:pointer;
+}
 
-    a{
-      color:var(--primary);
-      text-decoration:none;
-      font-weight:600;
-    }
+/* ===== Modal ===== */
+.modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.4);
+  align-items:center;
+  justify-content:center;
+}
 
-    a:hover{
-      text-decoration:underline;
-    }
-  </style>
+.modal-box{
+  background:white;
+  width:100%;
+  max-width:380px;
+  padding:25px;
+  border-radius:12px;
+}
+
+.modal h3{
+  margin-top:0;
+  color:var(--primary);
+  text-align:center;
+}
+
+.close{
+  text-align:center;
+  margin-top:10px;
+  color:#dc2626;
+}
+</style>
 </head>
 
 <body>
+
 <div class="container">
+<div class="card">
+  <h1>Farmer Login</h1>
 
-  <div class="card">
-    <h1>Farmer Login</h1>
+  <label>Phone Number</label>
+  <input id="phone" type="tel" placeholder="Enter phone">
 
-    <label for="phone">Phone Number</label>
-    <input
-      id="phone"
-      type="tel"
-      placeholder="Enter phone number"
-      aria-label="Phone Number"
-      title="Phone Number">
+  <label>Password</label>
+  <input id="password" type="password" placeholder="Enter password">
 
-    <label for="password">Password</label>
-    <input
-      id="password"
-      type="password"
-      placeholder="Enter password"
-      aria-label="Password"
-      title="Password">
+  <button id="login">Login</button>
 
-    <button id="login">Login</button>
+  <p>
+    <a id="forgotBtn">Forgot Password?</a><br><br>
+    New farmer? <a href="register.html">Register here</a><br>
+    <a href="index.html">Back to Admin Login</a>
+  </p>
+</div>
+</div>
 
-    <p>
-      New farmer?
-      <a href="register.html">Register here</a>
-      <br>
-      <a href="index.html">Back to Admin Login</a>
-    </p>
+<!-- ===== Forgot Password Modal ===== -->
+<div class="modal" id="forgotModal">
+  <div class="modal-box">
+    <h3>Reset Password</h3>
+
+    <label>Phone Number</label>
+    <input id="fpPhone" type="tel" placeholder="Registered phone">
+
+    <label>New Password</label>
+    <input id="fpNewPass" type="password" placeholder="New password">
+
+    <button id="resetBtn">Reset Password</button>
+
+    <div class="close">
+      <a onclick="closeModal()">Cancel</a>
+    </div>
   </div>
-
 </div>
 
 <script>
 const API = "https://ramana-back.onrender.com";
 
-document.getElementById('login').addEventListener('click', async ()=> {
-  const phone = document.getElementById('phone').value.trim();
+/* LOGIN */
+document.getElementById('login').onclick = async ()=>{
+  const phone = phone.value.trim();
   const password = document.getElementById('password').value;
 
-  if(!phone || !password){
-    alert('Please enter phone number and password');
-    return;
-  }
+  if(!phone || !password) return alert("Enter all fields");
 
-  const res = await fetch(API + '/api/auth/farmer/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ phone, password })
+  const res = await fetch(API+'/api/auth/farmer/login',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({phone,password})
   });
 
   const data = await res.json();
 
   if(data.token){
-    localStorage.setItem('token', data.token);
-    localStorage.setItem('farmerId', data.farmerId);
-    localStorage.setItem('name', data.name);
-    location.href = 'farmer.html';
-  } else {
-    alert(data.error || 'Login failed');
-  }
-});
-</script>
+    localStorage.setItem('token',data.token);
+    localStorage.setItem('farmerId',data.farmerId);
+    location.href='farmer.html';
+  }else alert(data.error || 'Login failed');
+}
 
+/* MODAL */
+forgotBtn.onclick = ()=> forgotModal.style.display='flex';
+function closeModal(){ forgotModal.style.display='none'; }
+
+/* RESET PASSWORD */
+resetBtn.onclick = async ()=>{
+  const phone = fpPhone.value.trim();
+  const newPassword = fpNewPass.value;
+
+  if(!phone || !newPassword) return alert("Fill all fields");
+
+  const res = await fetch(API+'/api/auth/farmer/forgot-password',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({phone,newPassword})
+  });
+
+  const data = await res.json();
+  alert(data.message || data.error);
+  if(data.success) closeModal();
+};
+</script>
 
 </body>
 </html>
