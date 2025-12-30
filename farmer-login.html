@@ -21,7 +21,6 @@ body{
   margin:0;
   font-family:"Segoe UI", Tahoma, Arial, sans-serif;
   background:var(--bg);
-  color:var(--text);
 }
 
 .container{
@@ -29,13 +28,12 @@ body{
   display:flex;
   align-items:center;
   justify-content:center;
-  padding:20px;
 }
 
 .card{
   width:100%;
   max-width:420px;
-  background:var(--card);
+  background:white;
   padding:30px;
   border-radius:12px;
   box-shadow:0 10px 25px rgba(0,0,0,0.08);
@@ -44,23 +42,20 @@ body{
 h1{
   text-align:center;
   color:var(--primary);
-  margin-bottom:20px;
 }
 
 label{
-  display:block;
   margin-top:14px;
+  display:block;
   font-weight:600;
-  font-size:14px;
 }
 
 input{
   width:100%;
-  padding:10px 12px;
+  padding:10px;
   margin-top:6px;
   border:1px solid var(--border);
   border-radius:8px;
-  font-size:14px;
 }
 
 button{
@@ -71,28 +66,15 @@ button{
   color:white;
   border:none;
   border-radius:8px;
-  font-size:15px;
   font-weight:600;
-  cursor:pointer;
-}
-
-button:hover{ opacity:0.9; }
-
-p{
-  text-align:center;
-  margin-top:15px;
-  font-size:14px;
-  color:var(--muted);
 }
 
 a{
   color:var(--primary);
-  text-decoration:none;
-  font-weight:600;
   cursor:pointer;
 }
 
-/* ===== Modal ===== */
+/* MODAL */
 .modal{
   display:none;
   position:fixed;
@@ -104,22 +86,10 @@ a{
 
 .modal-box{
   background:white;
+  padding:25px;
   width:100%;
   max-width:380px;
-  padding:25px;
   border-radius:12px;
-}
-
-.modal h3{
-  margin-top:0;
-  color:var(--primary);
-  text-align:center;
-}
-
-.close{
-  text-align:center;
-  margin-top:10px;
-  color:#dc2626;
 }
 </style>
 </head>
@@ -131,37 +101,40 @@ a{
   <h1>Farmer Login</h1>
 
   <label>Phone Number</label>
-  <input id="phone" type="tel" placeholder="Enter phone">
+  <input id="phone" type="tel">
 
   <label>Password</label>
-  <input id="password" type="password" placeholder="Enter password">
+  <input id="password" type="password">
 
   <button id="login">Login</button>
 
-  <p>
+  <p style="text-align:center;margin-top:15px;">
     <a id="forgotBtn">Forgot Password?</a><br><br>
-    New farmer? <a href="register.html">Register here</a><br>
+    <a href="register.html">New farmer? Register</a><br>
     <a href="index.html">Back to Admin Login</a>
   </p>
 </div>
 </div>
 
-<!-- ===== Forgot Password Modal ===== -->
+<!-- FORGOT PASSWORD MODAL -->
 <div class="modal" id="forgotModal">
   <div class="modal-box">
-    <h3>Reset Password</h3>
+    <h3 style="text-align:center;color:#2563eb;">Reset Farmer Password</h3>
 
-    <label>Phone Number</label>
-    <input id="fpPhone" type="tel" placeholder="Registered phone">
+    <label>Farmer Phone</label>
+    <input id="fpPhone" type="tel">
 
     <label>New Password</label>
-    <input id="fpNewPass" type="password" placeholder="New password">
+    <input id="fpNewPass" type="password">
 
-    <button id="resetBtn">Reset Password</button>
+    <label>Admin Password</label>
+    <input id="fpAdminPass" type="password" placeholder="Admin password required">
 
-    <div class="close">
+    <button id="resetBtn">Change Password</button>
+
+    <p style="text-align:center;color:red;">
       <a onclick="closeModal()">Cancel</a>
-    </div>
+    </p>
   </div>
 </div>
 
@@ -169,8 +142,8 @@ a{
 const API = "https://ramana-back.onrender.com";
 
 /* LOGIN */
-document.getElementById('login').onclick = async ()=>{
-  const phone = phone.value.trim();
+login.onclick = async ()=>{
+  const phone = document.getElementById('phone').value.trim();
   const password = document.getElementById('password').value;
 
   if(!phone || !password) return alert("Enter all fields");
@@ -182,7 +155,6 @@ document.getElementById('login').onclick = async ()=>{
   });
 
   const data = await res.json();
-
   if(data.token){
     localStorage.setItem('token',data.token);
     localStorage.setItem('farmerId',data.farmerId);
@@ -194,17 +166,19 @@ document.getElementById('login').onclick = async ()=>{
 forgotBtn.onclick = ()=> forgotModal.style.display='flex';
 function closeModal(){ forgotModal.style.display='none'; }
 
-/* RESET PASSWORD */
+/* RESET PASSWORD WITH ADMIN PASSWORD */
 resetBtn.onclick = async ()=>{
   const phone = fpPhone.value.trim();
   const newPassword = fpNewPass.value;
+  const adminPassword = fpAdminPass.value;
 
-  if(!phone || !newPassword) return alert("Fill all fields");
+  if(!phone || !newPassword || !adminPassword)
+    return alert("All fields required");
 
   const res = await fetch(API+'/api/auth/farmer/forgot-password',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({phone,newPassword})
+    body:JSON.stringify({ phone, newPassword, adminPassword })
   });
 
   const data = await res.json();
