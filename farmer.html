@@ -209,22 +209,11 @@ const API = "https://ramana-back.onrender.com";
 
 async function loadDashboard(){
   const token = localStorage.getItem("token");
-  const name  = localStorage.getItem("name");
 
   if(!token){
     location.href = "farmer-login.html";
     return;
   }
-
-  document.getElementById("info").innerHTML = `
-    <div>
-      <strong>${name || "Farmer"}</strong><br>
-      <span>Role: Farmer</span>
-    </div>
-    <div class="actions">
-      <a class="logout" href="#" onclick="logout()">Logout</a>
-    </div>
-  `;
 
   const res = await fetch(API + "/api/farmer/dashboard",{
     headers:{ Authorization:"Bearer " + token }
@@ -238,6 +227,19 @@ async function loadDashboard(){
   }
 
   const data = await res.json();
+  const farmer = data.farmer;
+
+  /* ===== HEADER INFO (NAME + PHONE) ===== */
+  document.getElementById("info").innerHTML = `
+    <div>
+      <strong>${farmer.name}</strong><br>
+      <span>📞 ${farmer.phone}</span>
+    </div>
+    <div class="actions">
+      <a class="logout" href="#" onclick="logout()">Logout</a>
+    </div>
+  `;
+
   const tbody = document.getElementById("tbody");
   tbody.innerHTML = "";
 
