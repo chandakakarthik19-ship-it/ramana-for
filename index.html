@@ -120,5 +120,13 @@ p{
   </div>
 
 </div>
+
+<!-- ✅ KEEP-ALIVE PING (ADD JUST BEFORE </body>) -->
+<script>
+  fetch("https://tractor-back-1l40.onrender.com/ping")
+    .then(() => console.log("✅ Backend is awake"))
+    .catch(() => console.log("⚠️ Backend ping failed"));
+</script>
+
 </body>
 </html>
