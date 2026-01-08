@@ -165,6 +165,8 @@ th{background:#f1f5f9}
 <h3>Tractor Expenses</h3>
 
 <button class="primary" onclick="toggleExpenseBox()">Add Expense</button>
+<button class="warn" onclick="toggleExpenseTable()">Show Expenses</button>
+
 
 <div id="expenseBox" style="display:none;margin-top:15px">
   <label>Expense Type</label>
@@ -182,6 +184,7 @@ th{background:#f1f5f9}
 
   <button class="success" onclick="addExpense()">Save Expense</button>
 </div>
+<div id="expenseTableBox" style="display:none">
 
 <table>
 <thead>
@@ -200,6 +203,7 @@ th{background:#f1f5f9}
     <div class="danger" id="expenseTotal">₹0</div>
   </div>
 </div>
+
 </div>
 
 
@@ -295,7 +299,6 @@ function toggleChangePassword(){
 
 document.addEventListener("DOMContentLoaded",()=>{
   loadFarmers();
-  loadExpenses();
 });
 
 
@@ -428,6 +431,18 @@ function addPayment(){
 function toggleExpenseBox(){
   expenseBox.style.display =
     expenseBox.style.display==="none" ? "block" : "none";
+}
+  
+/* SHOW / HIDE EXPENSE TABLE */
+function toggleExpenseTable(){
+  const box = document.getElementById("expenseTableBox");
+
+  if(box.style.display === "none"){
+    box.style.display = "block";
+    loadExpenses(); // load data ONLY when shown
+  } else {
+    box.style.display = "none";
+  }
 }
 
 /* LOAD EXPENSES */
