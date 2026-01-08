@@ -160,6 +160,48 @@ th{background:#f1f5f9}
 <input type="number" id="payAmount">
 <button class="success" onclick="addPayment()">Add Payment</button>
 </div>
+  <!-- TRACTOR EXPENSES -->
+<div class="card">
+<h3>Tractor Expenses</h3>
+
+<button class="primary" onclick="toggleExpenseBox()">Add Expense</button>
+
+<div id="expenseBox" style="display:none;margin-top:15px">
+  <label>Expense Type</label>
+  <select id="expenseType">
+    <option value="">-- Select --</option>
+    <option>Oil</option>
+    <option>Finance</option>
+    <option>Driver</option>
+    <option>Mechanic</option>
+    <option>Others</option>
+  </select>
+
+  <label>Amount</label>
+  <input type="number" id="expenseAmount">
+
+  <button class="success" onclick="addExpense()">Save Expense</button>
+</div>
+
+<table>
+<thead>
+<tr>
+  <th>Date</th>
+  <th>Type</th>
+  <th>Amount</th>
+</tr>
+</thead>
+<tbody id="expenseTbody"></tbody>
+</table>
+
+<div class="summary">
+  <div class="box">
+    <label>Total Expenses</label>
+    <div class="danger" id="expenseTotal">₹0</div>
+  </div>
+</div>
+</div>
+
 
 <!-- MANAGE FARMER -->
 <div class="card">
@@ -251,7 +293,11 @@ function toggleChangePassword(){
     changePassBox.style.display==="none"?"block":"none";
 }
 
-document.addEventListener("DOMContentLoaded",loadFarmers);
+document.addEventListener("DOMContentLoaded",()=>{
+  loadFarmers();
+  loadExpenses();
+});
+
 
 /* LOAD FARMERS */
 async function loadFarmers(){
@@ -378,6 +424,62 @@ function addPayment(){
     loadHistory();
   });
 }
+  /* TOGGLE EXPENSE BOX */
+function toggleExpenseBox(){
+  expenseBox.style.display =
+    expenseBox.style.display==="none" ? "block" : "none";
+}
+
+/* LOAD EXPENSES */
+async function loadExpenses(){
+  expenseTbody.innerHTML="";
+  let total=0;
+
+  const r = await fetch(API+"/api/admin/expenses",{
+    headers:{ Authorization:"Bearer "+token() }
+  });
+  const d = await r.json();
+
+  if(!d.success) return;
+
+  d.expenses.forEach(e=>{
+    total += e.amount;
+    expenseTbody.innerHTML += `
+      <tr>
+        <td>${new Date(e.date).toLocaleDateString()}</td>
+        <td>${e.type}</td>
+        <td>₹${e.amount}</td>
+      </tr>`;
+  });
+
+  expenseTotal.innerText = "₹"+total;
+}
+
+/* ADD EXPENSE */
+function addExpense(){
+  if(!expenseType.value || !expenseAmount.value)
+    return showToast("Fill all fields","error");
+
+  openConfirm("Add Expense","Save this expense?", async ()=>{
+    await fetch(API+"/api/admin/expenses",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        Authorization:"Bearer "+token()
+      },
+      body:JSON.stringify({
+        type:expenseType.value,
+        amount:+expenseAmount.value
+      })
+    });
+
+    showToast("Expense added");
+    expenseAmount.value="";
+    expenseType.value="";
+    loadExpenses();
+  });
+}
+
 
 /* DELETE FARMER */
 function deleteFarmer(){
